@@ -37,6 +37,9 @@ import org.apache.maven.plugins.annotations.LifecyclePhase;
 import org.apache.maven.plugins.annotations.Mojo;
 import org.apache.maven.plugins.annotations.Parameter;
 import org.apache.maven.settings.Server;
+import org.apache.maven.settings.crypto.DefaultSettingsDecryptionRequest;
+import org.apache.maven.settings.crypto.SettingsDecrypter;
+import org.apache.maven.settings.crypto.SettingsDecryptionResult;
 
 import static java.lang.String.format;
 import static org.sonatype.central.publisher.client.PublisherConstants.DEFAULT_ORGANIZATION_ID;
@@ -173,6 +176,9 @@ public class PublishMojo
 
   @Component
   private ComponentPublishedChecker componentPublishedChecker;
+
+  @Component
+  private SettingsDecrypter theCryptKeeper;
 
   private ChecksumRequest checksumRequest;
 
@@ -400,7 +406,10 @@ public class PublishMojo
   private AuthData getUserCredentials() {
     try {
       Server server = getMavenSession().getSettings().getServer(publishingServerId);
-      return new AuthData(server.getUsername(), server.getPassword());
+
+      SettingsDecryptionResult settingsDecryptionResult = theCryptKeeper.decrypt(new DefaultSettingsDecryptionRequest(server));
+
+      return new AuthData(settingsDecryptionResult.getServer().getUsername(), settingsDecryptionResult.getServer().getPassword());
     }
     catch (Exception e) {
       throw new RuntimeException("Unable to get publisher server properties for server id: " + publishingServerId, e);
