@@ -10,6 +10,8 @@ public class Constants
 
   public static final String DEFAULT_STAGING_DIR_NAME = "central-staging";
 
+  public static final String DEFAULT_DEFERRED_DIR_NAME = "central-deferred";
+
   public static final String LOCAL_STAGING_REPOSITORY_NAME = "central-staging";
 
   public static final String CLI_EXECUTION_ID = "default-cli";
@@ -70,7 +72,11 @@ public class Constants
 
   public static final String CENTRAL_BASE_URL_NAME = "centralBaseUrl";
 
+  public static final String CENTRAL_SNAPSHOTS_URL_NAME = "centralSnapshotsUrl";
+
   public static final String CENTRAL_BASE_URL_DEFAULT_VALUE = "https://central.sonatype.com";
+
+  public static final String CENTRAL_SNAPSHOTS_URL_DEFAULT_VALUE = CENTRAL_BASE_URL_DEFAULT_VALUE + "/repository/maven-snapshots/";
 
   public static final String IGNORE_PUBLISHED_COMPONENTS_NAME = "ignorePublishedComponents";
 

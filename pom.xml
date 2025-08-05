@@ -11,7 +11,7 @@
 
   <groupId>org.sonatype.central</groupId>
   <artifactId>central-publishing-maven-plugin</artifactId>
-  <version>0.6.0</version>
+  <version>0.7.0</version>
   <packaging>maven-plugin</packaging>
 
   <name>Central Publishing Maven Plugin</name>
@@ -89,7 +89,7 @@
     <dependency>
       <groupId>commons-io</groupId>
       <artifactId>commons-io</artifactId>
-      <version>2.13.0</version>
+      <version>2.15.1</version>
     </dependency>
     <dependency>
       <groupId>org.apache.commons</groupId>
@@ -172,6 +172,7 @@
             <settingsFile>src/it/settings.xml</settingsFile>
             <properties>
               <centralBaseUrl>http://localhost:${mockcentral.port}</centralBaseUrl>
+              <centralSnapshotsUrl>http://localhost:${mockcentral.port}/snapshots/</centralSnapshotsUrl>
             </properties>
             <goals>
               <goal>deploy</goal>
@@ -227,6 +228,7 @@
           <configuration>
             <logDate>ISO8601</logDate>
             <verbose>false</verbose>
+            <!-- set to true for logging requests -->
             <showLogs>false</showLogs>
             <images>
               <image>

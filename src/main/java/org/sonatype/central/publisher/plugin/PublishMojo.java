@@ -11,14 +11,17 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.stream.Stream;
 
 import org.sonatype.central.publisher.client.PublisherClient;
 import org.sonatype.central.publisher.client.model.PublishingType;
 import org.sonatype.central.publisher.plugin.bundler.ArtifactBundler;
 import org.sonatype.central.publisher.plugin.config.PlexusContextConfig;
+import org.sonatype.central.publisher.plugin.deffer.ArtifactDeferrer;
 import org.sonatype.central.publisher.plugin.model.ArtifactWithFile;
 import org.sonatype.central.publisher.plugin.model.BundleArtifactRequest;
 import org.sonatype.central.publisher.plugin.model.ChecksumRequest;
+import org.sonatype.central.publisher.plugin.model.DeferArtifactRequest;
 import org.sonatype.central.publisher.plugin.model.StageArtifactRequest;
 import org.sonatype.central.publisher.plugin.model.UploadArtifactRequest;
 import org.sonatype.central.publisher.plugin.model.WaitForDeploymentStateRequest;
@@ -30,6 +33,7 @@ import org.sonatype.central.publisher.plugin.utils.AuthData;
 import org.sonatype.central.publisher.plugin.watcher.DeploymentPublishedWatcher;
 
 import org.apache.commons.io.FileUtils;
+import org.apache.maven.artifact.deployer.ArtifactDeploymentException;
 import org.apache.maven.artifact.installer.ArtifactInstallationException;
 import org.apache.maven.plugin.MojoExecutionException;
 import org.apache.maven.plugins.annotations.Component;
@@ -42,9 +46,12 @@ import org.apache.maven.settings.crypto.SettingsDecrypter;
 import org.apache.maven.settings.crypto.SettingsDecryptionResult;
 
 import static java.lang.String.format;
+import static java.util.Collections.unmodifiableList;
+import static java.util.stream.Collectors.toList;
 import static org.sonatype.central.publisher.client.PublisherConstants.DEFAULT_ORGANIZATION_ID;
 import static org.sonatype.central.publisher.client.httpclient.auth.AuthProviderType.USERTOKEN;
 import static org.sonatype.central.publisher.plugin.Constants.*;
+import static org.sonatype.central.publisher.plugin.deffer.ArtifactDeferrerImpl.INDEX_FILE_NAME;
 
 @Mojo(name = "publish", defaultPhase = LifecyclePhase.DEPLOY, requiresOnline = true, threadSafe = true)
 public class PublishMojo
@@ -58,6 +65,9 @@ public class PublishMojo
 
   @Parameter(property = "stagingDirectory")
   private File forcedStagingDirectory;
+
+  @Parameter(property = "deferredDirectory")
+  private File forcedDeferredDirectory;
 
   @Parameter(property = "deploymentName", defaultValue = DEFAULT_DEPLOYMENT_NAME)
   private String deploymentName;
@@ -120,11 +130,18 @@ public class PublishMojo
   private boolean waitForPublishCompletion;
 
   /**
-   * Assign the URL that this plugin uses to publish deployments. Defaults to
+   * Assign the URL that this plugin uses to publish releases. Defaults to
    * {@link Constants#CENTRAL_BASE_URL_DEFAULT_VALUE}.
    */
   @Parameter(property = CENTRAL_BASE_URL_NAME, defaultValue = CENTRAL_BASE_URL_DEFAULT_VALUE)
   private String centralBaseUrl;
+
+  /**
+   * Assign the URL that this plugin uses to publish snapshots. Defaults to
+   * {@link Constants#CENTRAL_SNAPSHOTS_URL_DEFAULT_VALUE}.
+   */
+  @Parameter(property = CENTRAL_SNAPSHOTS_URL_NAME)
+  private String centralSnapshotsUrl;
 
   /**
    * Assign what type of checksums will be generated for files. Three options are available:
@@ -164,6 +181,9 @@ public class PublishMojo
 
   @Component
   private ArtifactStager artifactStager;
+
+  @Component
+  private ArtifactDeferrer artifactDeferrer;
 
   @Component
   private PublisherClient publisherClient;
@@ -277,33 +297,117 @@ public class PublishMojo
 
   @Override
   protected void doExecute() throws MojoExecutionException {
+    File deferredDirectory = getWorkDirectory(forcedDeferredDirectory, DEFAULT_DEFERRED_DIR_NAME);
     File stagingDirectory = getWorkDirectory(forcedStagingDirectory, DEFAULT_STAGING_DIR_NAME);
     File outputDirectory = getWorkDirectory(forcedOutputDirectory, DEFAULT_BUNDLE_OUTPUT_DIR_NAME);
-    configurePublisherClient();
-    processMavenModule(stagingDirectory);
 
-    if (getMojoUtils().isThisLastProjectWithThisMojoInExecution(getMavenSession(), getMojoExecution(),
-        getPluginGroupId(), getPluginArtifactId(), isFailOnBuildFailure())) {
-      postProcess(stagingDirectory, outputDirectory, deploymentName);
+    List<ArtifactWithFile> artifactWithFiles = getArtifactWithFiles();
+
+    if (getMavenSession().getCurrentProject().getArtifact().isSnapshot()) {
+      processSnapshot(artifactWithFiles, deferredDirectory);
+    }
+    else {
+      configurePublisherClient();
+      processRelease(artifactWithFiles, stagingDirectory);
+    }
+
+    if (isThisLastProjectWithThisMojoInExecution()) {
+      MojoExecutionException processSnapshotsFailure = null;
+
+      try {
+        postProcessSnapshot(deferredDirectory);
+      }
+      // Don't fail right away if we can't deploy snapshots, as we still want to deploy releases.
+      catch (MojoExecutionException e) {
+        processSnapshotsFailure = e;
+      }
+
+      try {
+        postProcessRelease(stagingDirectory, outputDirectory, deploymentName);
+      }
+      catch (Exception e) {
+        // It might appear as if we are potentially ignoring the snapshot failure if one occurred after a failure
+        // occurred during processing releases, but we will log a snapshot failure no matter what. We just throw the
+        // release failure right away, treating it as the most important reason for the build failure.
+        if (null != processSnapshotsFailure) {
+          getLog().error("Failed to deploy deferred artifacts", processSnapshotsFailure);
+        }
+
+        throw e;
+      }
+
+      // if we passed processing a release, and a snapshot failure occurred, throw it now.
+      if (null != processSnapshotsFailure) {
+        throw processSnapshotsFailure;
+      }
     }
   }
 
-  protected void processMavenModule(final File stagingDirectory) throws MojoExecutionException {
-    final List<ArtifactWithFile> artifactWithFiles =
-        getProjectUtils().getArtifacts(getMavenSession().getCurrentProject(), getArtifactFactory());
-    artifactWithFiles.removeIf(artifactWithFile -> {
-      if (excludeArtifacts.contains(artifactWithFile.getArtifact().getArtifactId())) {
-        return true;
+  private void postProcessSnapshot(final File deferredDirectory)
+      throws MojoExecutionException
+  {
+    try {
+      if (Files.exists(new File(deferredDirectory, INDEX_FILE_NAME).toPath())) {
+
+        if (isSkipPublishing()) {
+          getLog().info("Skipping Central SNAPSHOT Publishing at user's request.");
+          return;
+        }
+
+        // note that we pass a null for the remote repository, to get repository from the index from an install.
+        artifactDeferrer.deployUp(getMavenSession(), deferredDirectory, null);
       }
-      if (ignorePublishedComponents) {
-        return componentPublishedChecker.isComponentPublished(artifactWithFile.getArtifact().getGroupId(),
-            artifactWithFile.getArtifact().getArtifactId(), artifactWithFile.getArtifact().getVersion());
+      else {
+        getLog().debug("Skipping Central SNAPSHOT Publishing as no index with deferred artifacts were found.");
       }
-      return false;
-    });
+    }
+    catch (ArtifactDeploymentException | IOException e) {
+      throw new MojoExecutionException(e);
+    }
+  }
+
+  protected void processSnapshot(final List<ArtifactWithFile> artifactWithFiles, final File deferredDirectory)
+      throws MojoExecutionException
+  {
+    List<ArtifactWithFile> filteredArtifactWithFiles = artifactWithFiles.stream()
+        .filter(artifactWithFile -> !excludeArtifacts.contains(artifactWithFile.getArtifact().getArtifactId()))
+        .collect(toList());
 
     try {
-      artifactStager.stageArtifact(new StageArtifactRequest(artifactWithFiles, stagingDirectory));
+      artifactDeferrer.install(
+          new DeferArtifactRequest(
+              getMavenSession(),
+              filteredArtifactWithFiles,
+              deferredDirectory,
+              centralSnapshotsUrl,
+              publishingServerId
+          )
+      );
+    }
+    catch (ArtifactInstallationException e) {
+      throw new MojoExecutionException(e);
+    }
+  }
+
+  protected void processRelease(final List<ArtifactWithFile> artifactWithFiles, final File stagingDirectory)
+      throws MojoExecutionException
+  {
+    List<ArtifactWithFile> filteredArtifactWithFiles = artifactWithFiles.stream()
+        .filter(artifactWithFile -> {
+          if (excludeArtifacts.contains(artifactWithFile.getArtifact().getArtifactId())) {
+            return false;
+          }
+
+          if (ignorePublishedComponents) {
+            return !componentPublishedChecker.isComponentPublished(artifactWithFile.getArtifact().getGroupId(),
+                artifactWithFile.getArtifact().getArtifactId(), artifactWithFile.getArtifact().getVersion());
+          }
+
+          return true;
+        }).collect(toList());
+
+    try {
+      artifactStager.stageArtifact(new StageArtifactRequest(filteredArtifactWithFiles, stagingDirectory));
       artifactBundler.preBundle(getMavenSession().getCurrentProject(), stagingDirectory.toPath(), checksumRequest);
     }
     catch (final ArtifactInstallationException e) {
@@ -311,7 +415,16 @@ public class PublishMojo
     }
   }
 
-  protected void postProcess(final File stagingDirectory, final File outputDirectory, final String deploymentName) {
+  protected void postProcessRelease(
+      final File stagingDirectory,
+      final File outputDirectory,
+      final String deploymentName)
+  {
+    if (!hasFiles(stagingDirectory)) {
+      getLog().debug("Skipping Central Release Publishing as no staged artifacts were found.");
+      return;
+    }
+
     Path bundleFile = artifactBundler.bundle(
         new BundleArtifactRequest(
             getMavenSession().getCurrentProject(),
@@ -322,7 +435,7 @@ public class PublishMojo
         ));
 
     if (isSkipPublishing()) {
-      getLog().info("Skipping Central Publishing at user's request.");
+      getLog().info("Skipping Central Release Publishing at user's request.");
       return;
     }
 
@@ -343,6 +456,11 @@ public class PublishMojo
     );
 
     deploymentPublishedWatcher.waitForDeploymentState(waitForDeploymentStateRequest);
+  }
+
+  protected List<ArtifactWithFile> getArtifactWithFiles() throws MojoExecutionException {
+    return unmodifiableList(
+        getProjectUtils().getArtifacts(getMavenSession().getCurrentProject(), getArtifactFactory()));
   }
 
   /**
@@ -366,6 +484,16 @@ public class PublishMojo
     }
 
     return workDirectory;
+  }
+
+  private boolean isThisLastProjectWithThisMojoInExecution() {
+    return getMojoUtils().isThisLastProjectWithThisMojoInExecution(
+        getMavenSession(),
+        getMojoExecution(),
+        getPluginGroupId(),
+        getPluginArtifactId(),
+        isFailOnBuildFailure()
+    );
   }
 
   private void ensureCleanDirectory(File workingDirectory) {
@@ -407,9 +535,11 @@ public class PublishMojo
     try {
       Server server = getMavenSession().getSettings().getServer(publishingServerId);
 
-      SettingsDecryptionResult settingsDecryptionResult = theCryptKeeper.decrypt(new DefaultSettingsDecryptionRequest(server));
+      SettingsDecryptionResult settingsDecryptionResult =
+          theCryptKeeper.decrypt(new DefaultSettingsDecryptionRequest(server));
 
-      return new AuthData(settingsDecryptionResult.getServer().getUsername(), settingsDecryptionResult.getServer().getPassword());
+      return new AuthData(settingsDecryptionResult.getServer().getUsername(),
+          settingsDecryptionResult.getServer().getPassword());
     }
     catch (Exception e) {
       throw new RuntimeException("Unable to get publisher server properties for server id: " + publishingServerId, e);
@@ -427,5 +557,20 @@ public class PublishMojo
         waitUntilRequest.name().toLowerCase(),
         centralBaseURL
     ));
+  }
+
+  private boolean hasFiles(final File directory) {
+    try {
+      Path path = directory.toPath();
+      if (Files.exists(path) && Files.isDirectory(path)) {
+        try (Stream<Path> paths = Files.list(path)) {
+          return paths.findFirst().isPresent();
+        }
+      }
+    }
+    catch (IOException ignored) {
+    }
+
+    return false;
   }
 }
