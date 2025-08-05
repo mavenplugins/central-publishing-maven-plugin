@@ -92,13 +92,15 @@ public abstract class AbstractPublisherMojo
   public void execute()
       throws MojoExecutionException
   {
-    if (isSkipPublishing()) {
-      getLog().info("Skipping Central Publishing at user's request.");
-      return;
-    }
-
+    validateParameters();
     doExecute();
   }
 
+  public void validateParameters() throws MojoExecutionException {
+    doValidateParameters();
+  }
+
   protected abstract void doExecute() throws MojoExecutionException;
+
+  protected abstract void doValidateParameters() throws MojoExecutionException;
 }

@@ -39,4 +39,42 @@ public class Constants
   public static final String MAVEN_DEPLOY_PLUGIN_GROUP_ID = "org.apache.maven.plugins";
 
   public static final String MAVEN_DEPLOY_PLUGIN_ARTIFACT_ID = "maven-deploy-plugin";
+
+  public static final String AUTO_PUBLISH_NAME = "autoPublish";
+
+  public static final String AUTO_PUBLISH_DEFAULT_VALUE = "false";
+
+  public static final String WAIT_UNTIL_NAME = "waitUntil";
+
+  public static final String WAIT_UNTIL_DEFAULT_VALUE = "VALIDATED";
+
+  public static final String WAIT_MAX_TIME_NAME = "waitMaxTime";
+
+  public static final String WAIT_MAX_TIME_DEFAULT_VALUE = "1800"; // in seconds, 30 minutes.
+
+  public static final String WAIT_POLLING_INTERVAL_NAME = "waitPollingInterval";
+
+  public static final String WAIT_POLLING_INTERVAL_DEFAULT_VALUE = "5"; // in seconds.
+
+  public static final String CHECKSUMS_NAME = "checksums";
+
+  public static final String CHECKSUMS_DEFAULT_VALUE = "ALL";
+
+  public static final String PUBLISH_COMPLETION_POLL_INTERVAL_NAME = "publishCompletionPollInterval";
+
+  public static final String PUBLISH_COMPLETION_POLL_INTERVAL_DEFAULT_VALUE = "1000";
+
+  public static final String CENTRAL_BASE_URL_NAME = "centralBaseUrl";
+
+  public static final String CENTRAL_BASE_URL_DEFAULT_VALUE = "https://central.sonatype.com";
+
+  public static final String IGNORE_PUBLISHED_COMPONENTS_NAME = "ignorePublishedComponents";
+
+  public static final String IGNORE_PUBLISHED_COMPONENTS_DEFAULT_VALUE = "false";
+
+  public static final String EXCLUDE_ARTIFACTS_NAME = "excludeArtifacts";
+
+  public static final String WAIT_FOR_PUBLISH_COMPLETION_NAME = "waitForPublishCompletion";
+
+  public static final String WAIT_FOR_PUBLISH_COMPLETION_DEFAULT_VALUE = "false";
 }
