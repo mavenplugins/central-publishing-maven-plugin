@@ -188,17 +188,14 @@ public class ProjectUtilsImpl
   }
 
   private void deleteMavenMetadataCentralStagingXml(final MavenProject project, final Path sourceDir) {
-    deleteMavenMetadataCentralStagingXml(sourceDir, getProjectGroupPath(project));
     deleteMavenMetadataCentralStagingXml(sourceDir, getProjectGroupArtifactPath(project));
     deleteMavenMetadataCentralStagingXml(sourceDir, getProjectGroupArtifactVersionPath(project));
   }
 
   private void deleteMavenMetadataCentralStagingXml(final Path sourceDir, final Path path) {
     File file = sourceDir.resolve(path).resolve(MAVEN_METADATA_CENTRAL_STAGING_XML).toFile();
-    getLogger().debug("Pre Bundling - deleting " + file.getPath());
 
     if (!file.exists()) {
-      getLogger().debug("Pre Bundling - does not exist " + file.getPath());
       return;
     }
 
