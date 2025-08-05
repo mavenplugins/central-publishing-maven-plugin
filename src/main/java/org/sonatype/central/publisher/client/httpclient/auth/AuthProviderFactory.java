@@ -29,14 +29,6 @@ public class AuthProviderFactory
       throw new IllegalArgumentException("Must provide a valid credential for authentication!");
     }
 
-    switch (authProviderType) {
-      case BASIC:
-        return new BasicAuthProvider(organizationId, principal, credential);
-      case USERTOKEN:
-        return new UserTokenAuthProvider(organizationId, userId, principal, credential);
-    }
-
-    throw new IllegalStateException(
-        "Must provide a valid AuthProviderType {" + authProviderType.name() + "} for authentication!");
+    return new UserTokenAuthProvider(organizationId, userId, principal, credential);
   }
 }
