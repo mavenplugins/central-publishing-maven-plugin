@@ -11,7 +11,7 @@
 
   <groupId>org.sonatype.central</groupId>
   <artifactId>central-publishing-maven-plugin</artifactId>
-  <version>0.1.2</version>
+  <version>0.1.6</version>
   <packaging>maven-plugin</packaging>
 
   <name>Central Publishing Maven Plugin</name>
@@ -49,7 +49,7 @@
     <dependency>
       <groupId>org.sonatype.central</groupId>
       <artifactId>central-publishing-client</artifactId>
-      <version>1.0.1</version>
+      <version>1.0.4</version>
     </dependency>
     <dependency>
       <groupId>org.apache.maven</groupId>
@@ -380,24 +380,6 @@
               <skipNexusStagingDeployMojo>true</skipNexusStagingDeployMojo>
             </configuration>
           </plugin>
-          <!-- done -->
-          <plugin>
-            <groupId>org.apache.maven.plugins</groupId>
-            <artifactId>maven-gpg-plugin</artifactId>
-            <version>3.0.1</version>
-            <configuration>
-              <keyname>DF713C17</keyname>
-            </configuration>
-            <executions>
-              <execution>
-                <id>sign-artifacts</id>
-                <phase>verify</phase>
-                <goals>
-                  <goal>sign</goal>
-                </goals>
-              </execution>
-            </executions>
-          </plugin>
           <plugin>
             <groupId>org.apache.maven.plugins</groupId>
             <artifactId>maven-javadoc-plugin</artifactId>
@@ -428,9 +410,10 @@
             </executions>
           </plugin>
           <plugin>
-            <groupId>org.sonatype.central</groupId>
-            <artifactId>central-publishing-maven-plugin</artifactId>
-            <version>0.1.1</version>
+            <!-- use our own just built version -->
+            <groupId>${project.groupId}</groupId>
+            <artifactId>${project.artifactId}</artifactId>
+            <version>${project.version}</version>
             <executions>
               <execution>
                 <id>deploy-artifacts</id>
@@ -445,7 +428,7 @@
               <publishingServerId>publisher</publishingServerId>
               <centralBaseUrl>https://central.sonatype.com</centralBaseUrl>
               <tokenEnabled>true</tokenEnabled>
-              <deploymentName>Central Publishing Maven Plugin</deploymentName>
+              <deploymentName>Central Publishing Maven Plugin - ${project.version}</deploymentName>
               <checksums>required</checksums>
               <skipPublishing>false</skipPublishing>
             </configuration>

@@ -22,8 +22,8 @@ public interface HashUtils
 
   /**
    * Creates a checksum file for a given file. The hash file will be created alongside the given {@code file} in the same
-   * parent directory. Example the the file /test/1.0-SNAPSHOT.jar, after calling this method with, for example
-   * {@link HashAlgorithm#SHA512}, have alongside itself the file /test/1.0-SNAPSHOT.jar.sha512
+   * parent directory. Example the the file /test/1.0.jar, after calling this method with, for example
+   * {@link HashAlgorithm#SHA512}, have alongside itself the file /test/1.0.jar.sha512
    *
    * @param file - {@link File}
    * @param algorithm - {@link HashAlgorithm}
