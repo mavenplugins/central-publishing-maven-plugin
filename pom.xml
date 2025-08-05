@@ -11,13 +11,27 @@
 
   <groupId>org.sonatype.central</groupId>
   <artifactId>central-publishing-maven-plugin</artifactId>
-  <version>0.1.1</version>
+  <version>0.1.2</version>
   <packaging>maven-plugin</packaging>
 
   <name>Central Publishing Maven Plugin</name>
 
-  <!-- TODO change it? -->
-  <url>https://central.sonatype.org/</url>
+  <description>
+    This project is a maven plugin for publishing components in Maven Central
+  </description>
+
+  <licenses>
+    <license>
+      <name>The Apache License, Version 2.0</name>
+      <url>https://www.apache.org/licenses/LICENSE-2.0.txt</url>
+    </license>
+  </licenses>
+
+  <scm>
+    <url>https://github.com/sonatype/central-publishing-maven-plugin</url>
+  </scm>
+
+  <url>https://central.sonatype.org</url>
 
   <parent>
     <groupId>org.sonatype.buildsupport</groupId>
@@ -25,55 +39,11 @@
     <version>32</version>
   </parent>
 
-  <!-- TEMPORARY DEPLOYMENT CONFIGURATION -->
   <properties>
-    <!--Deployment configuration.-->
-    <private.serverId>sonatype-private</private.serverId>
-    <private.nexusUrl>https://repository.sonatype.org</private.nexusUrl>
-
-    <private-release.serverId>${private.serverId}</private-release.serverId>
-    <private-release.url>
-      https://repository.sonatype.org/service/local/staging/deploy/maven2
-    </private-release.url>
-
-    <private-snapshot.serverId>${private.serverId}</private-snapshot.serverId>
-    <private-snapshot.url>
-      https://repository.sonatype.org/content/repositories/sonatype-internal-snapshots
-    </private-snapshot.url>
-
-    <!--<private-site.serverId>${private.serverId}</private-site.serverId>-->
-    <!--<private-site.url>-->
-    <!--dav:https://repository.sonatype.org/content/sites/com-sites-->
-    <!--</private-site.url>-->
-
-    <!--
-    Staging configuration.
-    -->
-    <staging.serverId>${private.serverId}</staging.serverId>
-    <staging.nexusUrl>${private.nexusUrl}</staging.nexusUrl>
-
     <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
     <maven.compiler.source>11</maven.compiler.source>
     <maven.compiler.target>11</maven.compiler.target>
   </properties>
-
-  <distributionManagement>
-    <repository>
-      <id>${private-release.serverId}</id>
-      <url>${private-release.url}</url>
-    </repository>
-
-    <snapshotRepository>
-      <id>${private-snapshot.serverId}</id>
-      <url>${private-snapshot.url}</url>
-    </snapshotRepository>
-
-    <!--<site>-->
-    <!--<id>${private-site.serverId}</id>-->
-    <!--<url>${private-site.url}</url>-->
-    <!--</site>-->
-  </distributionManagement>
-  <!-- END TEMPORARY DEPLOYMENT CONFIGURATION -->
 
   <dependencies>
     <dependency>
@@ -460,7 +430,7 @@
           <plugin>
             <groupId>org.sonatype.central</groupId>
             <artifactId>central-publishing-maven-plugin</artifactId>
-            <version>0.1.0</version>
+            <version>0.1.1</version>
             <executions>
               <execution>
                 <id>deploy-artifacts</id>
@@ -475,7 +445,7 @@
               <publishingServerId>publisher</publishingServerId>
               <centralBaseUrl>https://central.sonatype.com</centralBaseUrl>
               <tokenEnabled>true</tokenEnabled>
-              <deploymentName>Central Publishing Maven Plugin 0.1.1</deploymentName>
+              <deploymentName>Central Publishing Maven Plugin</deploymentName>
               <checksums>required</checksums>
               <skipPublishing>false</skipPublishing>
             </configuration>
