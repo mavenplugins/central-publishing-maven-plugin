@@ -5,6 +5,7 @@
 package org.sonatype.central.publisher.plugin.utils;
 
 import java.io.File;
+import java.nio.file.FileSystems;
 import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.Collections;
@@ -98,7 +99,9 @@ public class MojoUtilsImpl
       return new File(firstWithThisMojoBuildDir, relativePath);
     }
 
-    return Path.of(mavenSession.getExecutionRootDirectory(), DEFAULT_BUILD_DIR_NAME, relativePath).toFile();
+    return FileSystems
+        .getDefault()
+        .getPath(mavenSession.getExecutionRootDirectory(), DEFAULT_BUILD_DIR_NAME, relativePath).toFile();
   }
 
   private MavenProject getFirstProjectWithThisPluginDefined(

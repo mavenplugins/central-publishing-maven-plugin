@@ -5,6 +5,7 @@
 package org.sonatype.central.publisher.plugin.utils;
 
 import java.io.File;
+import java.nio.file.FileSystems;
 import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.List;
@@ -103,7 +104,7 @@ public class ProjectUtilsImpl
   public Path getProjectGroupPath(final MavenProject project) {
     String[] groupPathParts = project.getGroupId().split("\\.");
 
-    Path path = Path.of("");
+    Path path = FileSystems.getDefault().getPath("");
 
     for (String groupPathPart : groupPathParts) {
       path = path.resolve(groupPathPart);
