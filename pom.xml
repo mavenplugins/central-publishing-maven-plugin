@@ -11,13 +11,14 @@
 
   <groupId>org.sonatype.central</groupId>
   <artifactId>central-publishing-maven-plugin</artifactId>
-  <version>0.2.0</version>
+  <version>0.3.0</version>
   <packaging>maven-plugin</packaging>
 
   <name>Central Publishing Maven Plugin</name>
 
   <description>
-    This project is a maven plugin for publishing components in Maven Central
+    This project is a maven plugin for publishing components in Maven Central, for more details
+    on its usage see https://central.sonatype.org/publish/publish-portal-maven
   </description>
 
   <licenses>
@@ -458,7 +459,7 @@
             <configuration>
               <publishingServerId>publisher</publishingServerId>
               <centralBaseUrl>https://central.sonatype.com</centralBaseUrl>
-              <tokenEnabled>true</tokenEnabled>
+              <tokenAuth>true</tokenAuth>
               <deploymentName>Central Publishing Maven Plugin - ${project.version}</deploymentName>
               <checksums>required</checksums>
               <skipPublishing>false</skipPublishing>

@@ -60,11 +60,11 @@ public class PublishMojo
   @Parameter(property = "deploymentName", defaultValue = DEFAULT_DEPLOYMENT_NAME)
   private String deploymentName;
 
-  @Parameter(defaultValue = "${publishing.server.id}", readonly = true)
+  @Parameter(property = PUBLISHING_SERVER_ID_NAME, defaultValue = PUBLISHING_SERVER_ID_DEFAULT_VALUE)
   private String publishingServerId;
 
-  @Parameter(property = "tokenAuth", defaultValue = "false", readonly = true)
-  private boolean tokenEnabled;
+  @Parameter(property = TOKEN_AUTH_NAME, defaultValue = TOKEN_AUTH_DEFAULT_VALUE)
+  private boolean tokenAuth;
 
   /**
    * Assign whether to auto publish a deployment. Meaning that no manual intervention is required, if a deployment is
@@ -395,7 +395,7 @@ public class PublishMojo
     getLog().info("Using credentials from server id " + publishingServerId + " in settings.xml");
 
     AuthData authData = getUserCredentials();
-    if (tokenEnabled) {
+    if (tokenAuth) {
       getLog().info("Using Usertoken auth, with namecode: " + authData.getUsername());
       publisherClient.setAuthProvider(USERTOKEN, DEFAULT_ORGANIZATION_ID,
           authData.getUsername(),
