@@ -10,6 +10,7 @@ import java.util.Map;
 import org.sonatype.central.publisher.client.httpclient.auth.AuthProvider;
 import org.sonatype.central.publisher.client.model.DeploymentApiResponse;
 
+import com.fasterxml.jackson.databind.DeserializationFeature;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.apache.hc.client5.http.HttpResponseException;
 
@@ -19,7 +20,11 @@ import static org.sonatype.central.publisher.client.httpclient.utils.HttpRespons
 
 public class StatusPublisherEndpoint
 {
-  private final ObjectMapper objectMapper = new ObjectMapper();
+  private static final ObjectMapper objectMapper = new ObjectMapper();
+
+  static {
+    objectMapper.configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false);
+  }
 
   public DeploymentApiResponse call(
       final String baseUrl,

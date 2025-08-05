@@ -20,8 +20,6 @@ public class DeploymentApiResponse
 
   private Map<String, List<String>> errors;
 
-  private String cherryBomUrl;
-
   public String getDeploymentId() {
     return deploymentId;
   }
@@ -60,13 +58,5 @@ public class DeploymentApiResponse
 
   public void setErrors(final Map<String, List<String>> errors) {
     this.errors = errors;
-  }
-
-  public String getCherryBomUrl() {
-    return cherryBomUrl;
-  }
-
-  public void setCherryBomUrl(final String cherryBomUrl) {
-    this.cherryBomUrl = cherryBomUrl;
   }
 }

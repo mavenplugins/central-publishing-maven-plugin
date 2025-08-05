@@ -362,7 +362,7 @@ public class PublishMojo
       }
     }
     catch (ArtifactDeploymentException | IOException e) {
-      throw new MojoExecutionException(e);
+      throw new MojoExecutionException(e.getMessage(), e);
     }
   }
 
@@ -385,7 +385,7 @@ public class PublishMojo
       );
     }
     catch (ArtifactInstallationException e) {
-      throw new MojoExecutionException(e);
+      throw new MojoExecutionException(e.getMessage(), e);
     }
   }
 
@@ -411,7 +411,7 @@ public class PublishMojo
       artifactBundler.preBundle(getMavenSession().getCurrentProject(), stagingDirectory.toPath(), checksumRequest);
     }
     catch (final ArtifactInstallationException e) {
-      throw new MojoExecutionException(e);
+      throw new MojoExecutionException(e.getMessage(), e);
     }
   }
 
