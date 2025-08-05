@@ -11,7 +11,7 @@
 
   <groupId>org.sonatype.central</groupId>
   <artifactId>central-publishing-maven-plugin</artifactId>
-  <version>0.3.0</version>
+  <version>0.3.1</version>
   <packaging>maven-plugin</packaging>
 
   <name>Central Publishing Maven Plugin</name>
@@ -42,15 +42,15 @@
 
   <properties>
     <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
-    <maven.compiler.source>11</maven.compiler.source>
-    <maven.compiler.target>11</maven.compiler.target>
+    <maven.compiler.source>8</maven.compiler.source>
+    <maven.compiler.target>8</maven.compiler.target>
   </properties>
 
   <dependencies>
     <dependency>
       <groupId>org.sonatype.central</groupId>
       <artifactId>central-publishing-client</artifactId>
-      <version>1.2.0</version>
+      <version>1.4.0</version>
     </dependency>
     <dependency>
       <groupId>org.apache.maven</groupId>
