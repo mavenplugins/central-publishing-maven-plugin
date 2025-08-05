@@ -17,8 +17,6 @@ public class PublisherConstants
 
   public static final String HTTP_AUTHORIZATION_HEADER = "Authorization";
 
-  public static final String HTTP_BASIC_AUTH_SCHEME = "Basic";
-
   public static final String HTTP_USERTOKEN_AUTH_SCHEME = "UserToken";
 
   public static final String ORGANIZATION_ID_QUERY_PARAM = "orgId";

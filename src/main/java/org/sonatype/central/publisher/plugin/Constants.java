@@ -44,10 +44,6 @@ public class Constants
 
   public static final String PUBLISHING_SERVER_ID_DEFAULT_VALUE = "central";
 
-  public static final String TOKEN_AUTH_NAME = "tokenAuth";
-
-  public static final String TOKEN_AUTH_DEFAULT_VALUE = "false";
-
   public static final String AUTO_PUBLISH_NAME = "autoPublish";
 
   public static final String AUTO_PUBLISH_DEFAULT_VALUE = "false";

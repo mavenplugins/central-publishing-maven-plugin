@@ -40,7 +40,6 @@ import org.apache.maven.settings.Server;
 
 import static java.lang.String.format;
 import static org.sonatype.central.publisher.client.PublisherConstants.DEFAULT_ORGANIZATION_ID;
-import static org.sonatype.central.publisher.client.httpclient.auth.AuthProviderType.BASIC;
 import static org.sonatype.central.publisher.client.httpclient.auth.AuthProviderType.USERTOKEN;
 import static org.sonatype.central.publisher.plugin.Constants.*;
 
@@ -62,9 +61,6 @@ public class PublishMojo
 
   @Parameter(property = PUBLISHING_SERVER_ID_NAME, defaultValue = PUBLISHING_SERVER_ID_DEFAULT_VALUE)
   private String publishingServerId;
-
-  @Parameter(property = TOKEN_AUTH_NAME, defaultValue = TOKEN_AUTH_DEFAULT_VALUE)
-  private boolean tokenAuth;
 
   /**
    * Assign whether to auto publish a deployment. Meaning that no manual intervention is required, if a deployment is
@@ -395,18 +391,10 @@ public class PublishMojo
     getLog().info("Using credentials from server id " + publishingServerId + " in settings.xml");
 
     AuthData authData = getUserCredentials();
-    if (tokenAuth) {
-      getLog().info("Using Usertoken auth, with namecode: " + authData.getUsername());
-      publisherClient.setAuthProvider(USERTOKEN, DEFAULT_ORGANIZATION_ID,
-          authData.getUsername(),
-          authData.getPassword());
-    }
-    else {
-      getLog().info("Using Basic auth, with username: " + authData.getUsername());
-      publisherClient.setAuthProvider(BASIC, DEFAULT_ORGANIZATION_ID,
-          authData.getUsername(),
-          authData.getPassword());
-    }
+    getLog().info("Using Usertoken auth, with namecode: " + authData.getUsername());
+    publisherClient.setAuthProvider(USERTOKEN, DEFAULT_ORGANIZATION_ID,
+        authData.getUsername(),
+        authData.getPassword());
   }
 
   private AuthData getUserCredentials() {
