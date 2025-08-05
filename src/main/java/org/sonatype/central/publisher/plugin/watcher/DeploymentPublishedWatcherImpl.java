@@ -7,6 +7,7 @@ package org.sonatype.central.publisher.plugin.watcher;
 
 import java.time.Duration;
 import java.time.Instant;
+import java.time.temporal.ChronoUnit;
 import java.util.List;
 import java.util.Map.Entry;
 
@@ -24,6 +25,7 @@ import org.codehaus.plexus.component.annotations.Requirement;
 import org.codehaus.plexus.logging.AbstractLogEnabled;
 
 import static java.lang.String.format;
+import static java.time.temporal.ChronoUnit.SECONDS;
 import static org.apache.commons.lang3.StringUtils.isNotBlank;
 
 @Component(role = DeploymentPublishedWatcher.class)
@@ -57,7 +59,7 @@ public class DeploymentPublishedWatcherImpl
         "Waiting until Deployment %s is %s", deploymentId, waitForDeploymentStateRequest.waitTypeName()));
 
     try {
-      while (Duration.between(start, Instant.now()).toSeconds() <
+      while (Duration.between(start, Instant.now()).get(SECONDS) <
           waitForDeploymentStateRequest.getWaitMaxTimeInSeconds()) {
 
         // convert to milliseconds

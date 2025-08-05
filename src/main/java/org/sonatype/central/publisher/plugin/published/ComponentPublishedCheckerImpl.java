@@ -5,8 +5,6 @@
 
 package org.sonatype.central.publisher.plugin.published;
 
-import java.util.Objects;
-
 import org.sonatype.central.publisher.client.PublisherClient;
 import org.sonatype.central.publisher.client.PublisherClientFactory;
 
@@ -27,8 +25,7 @@ public class ComponentPublishedCheckerImpl
   }
 
   public ComponentPublishedCheckerImpl(final PublisherClient publisherClient) {
-    this.publisherClient =
-        Objects.requireNonNullElseGet(publisherClient, PublisherClientFactory::createPublisherClient);
+    this.publisherClient = publisherClient != null ? publisherClient : PublisherClientFactory.createPublisherClient();
     if (this.getLogger() == null) {
       this.enableLogging(new ConsoleLogger());
     }

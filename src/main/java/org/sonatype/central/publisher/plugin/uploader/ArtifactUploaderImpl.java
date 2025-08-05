@@ -15,7 +15,6 @@ import org.codehaus.plexus.component.annotations.Requirement;
 import org.codehaus.plexus.logging.AbstractLogEnabled;
 
 import static java.lang.String.format;
-import static java.util.Objects.requireNonNullElseGet;
 
 @Component(role = ArtifactUploader.class)
 public class ArtifactUploaderImpl
@@ -29,7 +28,7 @@ public class ArtifactUploaderImpl
   public ArtifactUploaderImpl() { }
 
   ArtifactUploaderImpl(final PublisherClient publisherClient) {
-    this.publisherClient = requireNonNullElseGet(publisherClient, PublisherClientFactory::createPublisherClient);
+    this.publisherClient = publisherClient != null ? publisherClient : PublisherClientFactory.createPublisherClient();
   }
 
   @Override
