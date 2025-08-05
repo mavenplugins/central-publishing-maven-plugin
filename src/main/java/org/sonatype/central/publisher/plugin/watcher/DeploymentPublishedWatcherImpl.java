@@ -7,7 +7,6 @@ package org.sonatype.central.publisher.plugin.watcher;
 
 import java.time.Duration;
 import java.time.Instant;
-import java.time.temporal.ChronoUnit;
 import java.util.List;
 import java.util.Map.Entry;
 
@@ -26,7 +25,6 @@ import org.codehaus.plexus.logging.AbstractLogEnabled;
 
 import static java.lang.String.format;
 import static java.time.temporal.ChronoUnit.SECONDS;
-import static org.apache.commons.lang3.StringUtils.isNotBlank;
 
 @Component(role = DeploymentPublishedWatcher.class)
 public class DeploymentPublishedWatcherImpl
@@ -118,11 +116,6 @@ public class DeploymentPublishedWatcherImpl
     for (String purl : status.getPurls()) {
       String purlDisplay = purlUtils.toRepo1Url(purl).orElse(purl);
       successMessage.append(" - ").append(purlDisplay).append("\n");
-    }
-
-    String cherryBomUrl = status.getCherryBomUrl();
-    if (isNotBlank(cherryBomUrl)) {
-      successMessage.append("CherryBomb Report: ").append(cherryBomUrl);
     }
 
     getLogger().info(successMessage.toString());

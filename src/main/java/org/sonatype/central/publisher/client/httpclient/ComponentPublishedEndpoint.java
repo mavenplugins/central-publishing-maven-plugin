@@ -11,6 +11,7 @@ import java.util.Map;
 import org.sonatype.central.publisher.client.httpclient.auth.AuthProvider;
 
 import com.fasterxml.jackson.core.type.TypeReference;
+import com.fasterxml.jackson.databind.DeserializationFeature;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.apache.hc.client5.http.HttpResponseException;
 
@@ -20,7 +21,11 @@ import static org.sonatype.central.publisher.client.httpclient.utils.HttpRespons
 
 public class ComponentPublishedEndpoint
 {
-  private final ObjectMapper objectMapper = new ObjectMapper();
+  private static final ObjectMapper objectMapper = new ObjectMapper();
+
+  static {
+    objectMapper.configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false);
+  }
 
   public boolean call(
       final String baseUrl,
