@@ -9,6 +9,7 @@ import java.io.File;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.util.ArrayList;
 import java.util.List;
 
 import org.sonatype.central.publisher.client.PublisherClient;
@@ -21,6 +22,7 @@ import org.sonatype.central.publisher.plugin.model.BundleArtifactRequest;
 import org.sonatype.central.publisher.plugin.model.ChecksumRequest;
 import org.sonatype.central.publisher.plugin.model.StageArtifactRequest;
 import org.sonatype.central.publisher.plugin.model.UploadArtifactRequest;
+import org.sonatype.central.publisher.plugin.published.ComponentPublishedChecker;
 import org.sonatype.central.publisher.plugin.stager.ArtifactStager;
 import org.sonatype.central.publisher.plugin.uploader.ArtifactUploader;
 import org.sonatype.central.publisher.plugin.utils.AuthData;
@@ -75,6 +77,9 @@ public class PublishMojo
   @Parameter(property = "centralBaseUrl")
   private String centralBaseUrl;
 
+  @Parameter(property = "ignorePublishedComponents", defaultValue = "false")
+  private boolean ignorePublishedComponents;
+
   /**
    * Assign what type of checksums will be generated for files. Three options are available:
    * <p/>
@@ -87,6 +92,9 @@ public class PublishMojo
    */
   @Parameter(property = "checksums", defaultValue = "ALL")
   private String checksums;
+
+  @Parameter(property = "excludeArtifacts")
+  private List<String> excludeArtifacts = new ArrayList<>();
 
   @Component
   private PlexusContextConfig plexusContextConfig;
@@ -106,11 +114,14 @@ public class PublishMojo
   @Component
   private DeploymentPublishedWatcher deploymentPublishedWatcher;
 
+  @Component
+  private ComponentPublishedChecker componentPublishedChecker;
+
   @Override
   protected void doExecute() throws MojoExecutionException {
     File stagingDirectory = getWorkDirectory(forcedStagingDirectory, DEFAULT_STAGING_DIR_NAME);
     File outputDirectory = getWorkDirectory(forcedOutputDirectory, DEFAULT_BUNDLE_OUTPUT_DIR_NAME);
-
+    configurePublisherClient();
     processMavenModule(stagingDirectory);
 
     if (getMojoUtils().isThisLastProjectWithThisMojoInExecution(getMavenSession(), getMojoExecution(),
@@ -122,7 +133,16 @@ public class PublishMojo
   protected void processMavenModule(final File stagingDirectory) throws MojoExecutionException {
     final List<ArtifactWithFile> artifactWithFiles =
         getProjectUtils().getArtifacts(getMavenSession().getCurrentProject(), getArtifactFactory());
-
+    artifactWithFiles.removeIf(artifactWithFile -> {
+      if (excludeArtifacts.contains(artifactWithFile.getArtifact().getArtifactId())) {
+        return true;
+      }
+      if (ignorePublishedComponents) {
+        return componentPublishedChecker.isComponentPublished(artifactWithFile.getArtifact().getGroupId(),
+            artifactWithFile.getArtifact().getArtifactId(), artifactWithFile.getArtifact().getVersion());
+      }
+      return false;
+    });
     try {
       artifactStager.stageArtifact(new StageArtifactRequest(artifactWithFiles, stagingDirectory));
       artifactBundler.preBundle(getMavenSession().getCurrentProject(),
@@ -150,7 +170,6 @@ public class PublishMojo
     }
     UploadArtifactRequest uploadRequest =
         new UploadArtifactRequest(deploymentName, bundleFile, publishingType);
-    configurePublisherClient();
     String deploymentId = artifactUploader.upload(uploadRequest);
     if (waitForPublishCompletion) {
       // TODO: Move this into the catch block of ArtifactUploaderImpl as a part of CDV-2088

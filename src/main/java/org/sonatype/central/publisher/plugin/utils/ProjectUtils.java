@@ -31,8 +31,8 @@ public interface ProjectUtils
 
   /**
    * Create checksum files for the direct files in the {@code sourceDir}. For example, if a {@code sourceDir} contains
-   * the file TEST-1.0-SNAPSHOT.pom, checksum files will be created for all the requested checksums in the given
-   * {@code checksumRequest}, like TEST-1.0-SNAPSHOT.pom.md5
+   * the file TEST-1.0.pom, checksum files will be created for all the requested checksums in the given
+   * {@code checksumRequest}, like TEST-1.0.pom.md5
    * <p>
    * This method doesn't recursively go through child folders.
    *
