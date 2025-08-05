@@ -10,13 +10,13 @@ import java.util.List;
 import static java.util.stream.Collectors.toList;
 
 /**
- * Simple enum holding values on which Checksum are requested to be used.
+ * Simple enum holding values on which WaitUntilRequest are requested to be used.
  */
-public enum ChecksumRequest
+public enum WaitUntilRequest
 {
-  ALL, // Will request MD5, SHA1, SHA256 and SHA512 to be generated
-  REQUIRED, // Only MD5 and SHA1 will be requested to be generated
-  NONE; // No Checksums will be requested to be generated.
+  UPLOADED,
+  VALIDATED,
+  PUBLISHED;
 
   public static boolean isValidValue(final String value) {
     try {
@@ -29,6 +29,6 @@ public enum ChecksumRequest
   }
 
   public static List<String> toNames() {
-    return Arrays.stream(ChecksumRequest.values()).map(Enum::name).map(String::toLowerCase).collect(toList());
+    return Arrays.stream(WaitUntilRequest.values()).map(Enum::name).map(String::toLowerCase).collect(toList());
   }
 }

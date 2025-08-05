@@ -5,8 +5,9 @@
 
 package org.sonatype.central.publisher.plugin.watcher;
 
+import org.sonatype.central.publisher.plugin.model.WaitForDeploymentStateRequest;
+
 public interface DeploymentPublishedWatcher
 {
-
-  void waitForPublishCompletion(String deploymentId, int publishCompletionPollInterval);
+  void waitForDeploymentState(WaitForDeploymentStateRequest waitForDeploymentStateRequest);
 }

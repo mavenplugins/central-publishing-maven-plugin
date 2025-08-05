@@ -16,12 +16,13 @@ import org.sonatype.central.publisher.client.PublisherClient;
 import org.sonatype.central.publisher.client.model.PublishingType;
 import org.sonatype.central.publisher.plugin.bundler.ArtifactBundler;
 import org.sonatype.central.publisher.plugin.config.PlexusContextConfig;
-import org.sonatype.central.publisher.plugin.exceptions.DeploymentPublishFailedException;
 import org.sonatype.central.publisher.plugin.model.ArtifactWithFile;
 import org.sonatype.central.publisher.plugin.model.BundleArtifactRequest;
 import org.sonatype.central.publisher.plugin.model.ChecksumRequest;
 import org.sonatype.central.publisher.plugin.model.StageArtifactRequest;
 import org.sonatype.central.publisher.plugin.model.UploadArtifactRequest;
+import org.sonatype.central.publisher.plugin.model.WaitForDeploymentStateRequest;
+import org.sonatype.central.publisher.plugin.model.WaitUntilRequest;
 import org.sonatype.central.publisher.plugin.published.ComponentPublishedChecker;
 import org.sonatype.central.publisher.plugin.stager.ArtifactStager;
 import org.sonatype.central.publisher.plugin.uploader.ArtifactUploader;
@@ -37,14 +38,11 @@ import org.apache.maven.plugins.annotations.Mojo;
 import org.apache.maven.plugins.annotations.Parameter;
 import org.apache.maven.settings.Server;
 
+import static java.lang.String.format;
 import static org.sonatype.central.publisher.client.PublisherConstants.DEFAULT_ORGANIZATION_ID;
 import static org.sonatype.central.publisher.client.httpclient.auth.AuthProviderType.BASIC;
 import static org.sonatype.central.publisher.client.httpclient.auth.AuthProviderType.USERTOKEN;
-import static org.sonatype.central.publisher.plugin.Constants.DEFAULT_BUNDLE_OUTPUT_DIR_NAME;
-import static org.sonatype.central.publisher.plugin.Constants.DEFAULT_BUNDLE_OUTPUT_FILENAME;
-import static org.sonatype.central.publisher.plugin.Constants.DEFAULT_DEPLOYMENT_NAME;
-import static org.sonatype.central.publisher.plugin.Constants.DEFAULT_STAGING_DIR_NAME;
-import static org.sonatype.central.publisher.plugin.model.ChecksumRequest.ALL;
+import static org.sonatype.central.publisher.plugin.Constants.*;
 
 @Mojo(name = "publish", defaultPhase = LifecyclePhase.DEPLOY, requiresOnline = true, threadSafe = true)
 public class PublishMojo
@@ -68,17 +66,66 @@ public class PublishMojo
   @Parameter(property = "tokenAuth", defaultValue = "false", readonly = true)
   private boolean tokenEnabled;
 
-  @Parameter(property = "waitForPublishCompletion", defaultValue = "false")
-  private boolean waitForPublishCompletion;
+  /**
+   * Assign whether to auto publish a deployment. Meaning that no manual intervention is required, if a deployment is
+   * considered valid, before publishing it. Defaults to {@link Constants#AUTO_PUBLISH_DEFAULT_VALUE}.
+   */
+  @Parameter(property = AUTO_PUBLISH_NAME, defaultValue = AUTO_PUBLISH_DEFAULT_VALUE)
+  private boolean autoPublish;
 
-  @Parameter(property = "publishCompletionPollInterval", defaultValue = "1000")
+  /**
+   * Assign what to wait for, if desired to wait, of the processing of a deployment. See @{@link WaitUntilRequest} for
+   * options. Defaults to {@link Constants#WAIT_MAX_TIME_DEFAULT_VALUE}.
+   */
+  @Parameter(
+      property = WAIT_UNTIL_NAME,
+      defaultValue = WAIT_UNTIL_DEFAULT_VALUE
+  )
+  private String waitUntil;
+
+  /**
+   * Assign the amount of seconds that the plugin will wait for a deployment state. Can not be less than
+   * {@link Constants#WAIT_MAX_TIME_DEFAULT_VALUE}.
+   */
+  @Parameter(
+      property = WAIT_MAX_TIME_NAME,
+      defaultValue = WAIT_MAX_TIME_DEFAULT_VALUE
+  )
+  private int waitMaxTime;
+
+  /**
+   * Assign the amount of seconds between checking whether a deployment has published. Can not be less than
+   * {@link Constants#WAIT_POLLING_INTERVAL_DEFAULT_VALUE}.
+   */
+  @Parameter(
+      property = WAIT_POLLING_INTERVAL_NAME,
+      defaultValue = WAIT_POLLING_INTERVAL_DEFAULT_VALUE
+  )
+  private int waitPollingInterval;
+
+  /**
+   * @deprecated use {@link #waitPollingInterval} instead
+   */
+  @Deprecated
+  @Parameter(
+      property = PUBLISH_COMPLETION_POLL_INTERVAL_NAME,
+      defaultValue = PUBLISH_COMPLETION_POLL_INTERVAL_DEFAULT_VALUE
+  )
   private int publishCompletionPollInterval;
 
-  @Parameter(property = "centralBaseUrl")
-  private String centralBaseUrl;
+  /**
+   * @deprecated use {@link #autoPublish} in combination with {@link #waitUntil} instead
+   */
+  @Deprecated
+  @Parameter(property = WAIT_FOR_PUBLISH_COMPLETION_NAME, defaultValue = WAIT_FOR_PUBLISH_COMPLETION_DEFAULT_VALUE)
+  private boolean waitForPublishCompletion;
 
-  @Parameter(property = "ignorePublishedComponents", defaultValue = "false")
-  private boolean ignorePublishedComponents;
+  /**
+   * Assign the URL that this plugin uses to publish deployments. Defaults to
+   * {@link Constants#CENTRAL_BASE_URL_DEFAULT_VALUE}.
+   */
+  @Parameter(property = CENTRAL_BASE_URL_NAME, defaultValue = CENTRAL_BASE_URL_DEFAULT_VALUE)
+  private String centralBaseUrl;
 
   /**
    * Assign what type of checksums will be generated for files. Three options are available:
@@ -90,10 +137,24 @@ public class PublishMojo
    * none - No Checksums will be requested to be generated.
    * <p/>
    */
-  @Parameter(property = "checksums", defaultValue = "ALL")
+  @Parameter(property = CHECKSUMS_NAME, defaultValue = CHECKSUMS_DEFAULT_VALUE)
   private String checksums;
 
-  @Parameter(property = "excludeArtifacts")
+  /**
+   * Assign whether we ignore, or more specifically, not add components that have already been published in the past to
+   * the bundle that will be published. When working with projects that are using a multi-module setup, and it's desired
+   * to publish only new modules (for example parent, child1 and child2 are all published, and it's desired to publish a
+   * new version X.Y.1 of child2, but leave child1 and parent unchanged), this setting will assure that previous
+   * published components will not be published again, which will cause the publishing to fail. Defaults to
+   * {@link Constants#IGNORE_PUBLISHED_COMPONENTS_DEFAULT_VALUE}.
+   */
+  @Parameter(property = IGNORE_PUBLISHED_COMPONENTS_NAME, defaultValue = IGNORE_PUBLISHED_COMPONENTS_DEFAULT_VALUE)
+  private boolean ignorePublishedComponents;
+
+  /**
+   * Assign artifacts that must not be added to the bundle that represents the deployment that will be published.
+   */
+  @Parameter(property = EXCLUDE_ARTIFACTS_NAME)
   private List<String> excludeArtifacts = new ArrayList<>();
 
   @Component
@@ -116,6 +177,101 @@ public class PublishMojo
 
   @Component
   private ComponentPublishedChecker componentPublishedChecker;
+
+  private ChecksumRequest checksumRequest;
+
+  private WaitUntilRequest waitUntilRequest;
+
+  private PublishingType publishingType;
+
+  @Override
+  protected void doValidateParameters() throws MojoExecutionException {
+    int publishCompletionPollIntervalDefault = Integer.parseInt(PUBLISH_COMPLETION_POLL_INTERVAL_DEFAULT_VALUE);
+    int waitPollingIntervalDefault = Integer.parseInt(WAIT_POLLING_INTERVAL_DEFAULT_VALUE);
+
+    // if the default is not used, update waitPollingIntervalDefault.
+    if (publishCompletionPollInterval != publishCompletionPollIntervalDefault) {
+      getLog().warn(format(
+          "%s is deprecated, using it will set %s (converted to seconds).",
+          PUBLISH_COMPLETION_POLL_INTERVAL_NAME,
+          WAIT_MAX_TIME_NAME
+      ));
+
+      // only update waitPollingInterval if it was still set to the default
+      if (waitPollingInterval == waitPollingIntervalDefault) {
+        // convert to seconds from milliseconds
+        waitPollingInterval = (publishCompletionPollInterval / 1000);
+      }
+    }
+
+    if (waitPollingInterval < waitPollingIntervalDefault) {
+      getLog().warn(format(
+          "%s was set to be less then %2$s seconds, will use the default of %2$s seconds.",
+          WAIT_POLLING_INTERVAL_NAME,
+          WAIT_POLLING_INTERVAL_DEFAULT_VALUE
+      ));
+
+      waitPollingInterval = waitPollingIntervalDefault;
+    }
+
+    int waitMaxTimeDefault = Integer.parseInt(WAIT_MAX_TIME_DEFAULT_VALUE);
+
+    if (waitMaxTime < Integer.parseInt(WAIT_MAX_TIME_DEFAULT_VALUE)) {
+      getLog().warn(format(
+          "%s was set to be less then %2$s seconds, will use the default of %2$s seconds.",
+          WAIT_MAX_TIME_NAME,
+          WAIT_MAX_TIME_DEFAULT_VALUE
+      ));
+
+      waitMaxTime = waitMaxTimeDefault;
+    }
+
+    if (!ChecksumRequest.isValidValue(checksums)) {
+      throw new MojoExecutionException(format("%s must be one of the following values %s.",
+          CHECKSUMS_NAME,
+          ChecksumRequest.toNames())
+      );
+    }
+
+    checksumRequest = ChecksumRequest.valueOf(checksums.toUpperCase());
+
+    if (!WaitUntilRequest.isValidValue(waitUntil)) {
+      throw new MojoExecutionException(format("%s must be one of the following values %s.",
+          WAIT_UNTIL_NAME,
+          WaitUntilRequest.toNames())
+      );
+    }
+
+    waitUntilRequest = WaitUntilRequest.valueOf(waitUntil.toUpperCase());
+    publishingType = autoPublish ? PublishingType.AUTOMATIC : PublishingType.USER_MANAGED;
+
+    // waitForPublishCompletion is deprecated, but if used, overwrite actually used values.
+    if (waitForPublishCompletion) {
+      getLog().warn(format(
+          "waitForPublishCompletion is deprecated, using it will set %s to true and %s to %s.",
+          AUTO_PUBLISH_NAME,
+          WAIT_UNTIL_NAME,
+          WaitUntilRequest.PUBLISHED.name().toLowerCase()
+      ));
+
+      publishingType = PublishingType.AUTOMATIC;
+      waitUntilRequest = WaitUntilRequest.PUBLISHED;
+    }
+
+    // Are we asked to wait till all was finished publishing while auto publish is disabled? Return and log it.
+    if (waitUntilRequest == WaitUntilRequest.PUBLISHED && !autoPublish) {
+
+      getLog().warn(format(
+          "Requested to wait for state: %s, but %s is set to %s (default). Waiting only until %s.",
+          waitUntilRequest.name().toLowerCase(),
+          AUTO_PUBLISH_NAME,
+          AUTO_PUBLISH_DEFAULT_VALUE,
+          WaitUntilRequest.VALIDATED.name().toLowerCase()
+      ));
+
+      waitUntilRequest = WaitUntilRequest.VALIDATED;
+    }
+  }
 
   @Override
   protected void doExecute() throws MojoExecutionException {
@@ -143,10 +299,10 @@ public class PublishMojo
       }
       return false;
     });
+
     try {
       artifactStager.stageArtifact(new StageArtifactRequest(artifactWithFiles, stagingDirectory));
-      artifactBundler.preBundle(getMavenSession().getCurrentProject(),
-          stagingDirectory.toPath(), ChecksumRequest.valueOf(checksums, ALL));
+      artifactBundler.preBundle(getMavenSession().getCurrentProject(), stagingDirectory.toPath(), checksumRequest);
     }
     catch (final ArtifactInstallationException e) {
       throw new MojoExecutionException(e);
@@ -154,30 +310,37 @@ public class PublishMojo
   }
 
   protected void postProcess(final File stagingDirectory, final File outputDirectory, final String deploymentName) {
-
     Path bundleFile = artifactBundler.bundle(
         new BundleArtifactRequest(
             getMavenSession().getCurrentProject(),
             stagingDirectory,
             outputDirectory,
             outputFilename,
-            ChecksumRequest.valueOf(checksums, ALL)
+            checksumRequest
         ));
 
-    PublishingType publishingType = PublishingType.USER_MANAGED;
-    if (waitForPublishCompletion) {
-      publishingType = PublishingType.AUTOMATIC;
+    if (isSkipPublishing()) {
+      getLog().info("Skipping Central Publishing at user's request.");
+      return;
     }
-    UploadArtifactRequest uploadRequest =
-        new UploadArtifactRequest(deploymentName, bundleFile, publishingType);
+
+    UploadArtifactRequest uploadRequest = new UploadArtifactRequest(deploymentName, bundleFile, publishingType);
     String deploymentId = artifactUploader.upload(uploadRequest);
-    if (waitForPublishCompletion) {
-      // TODO: Move this into the catch block of ArtifactUploaderImpl as a part of CDV-2088
-      if (null == deploymentId) {
-        throw new DeploymentPublishFailedException(deploymentName);
-      }
-      deploymentPublishedWatcher.waitForPublishCompletion(deploymentId, publishCompletionPollInterval);
+
+    if (waitUntilRequest == WaitUntilRequest.UPLOADED) {
+      outputWhereToFinishPublishing(centralBaseUrl, waitUntilRequest, deploymentId);
+      return;
     }
+
+    WaitForDeploymentStateRequest waitForDeploymentStateRequest = new WaitForDeploymentStateRequest(
+        centralBaseUrl,
+        deploymentId,
+        waitUntilRequest,
+        waitMaxTime,
+        waitPollingInterval
+    );
+
+    deploymentPublishedWatcher.waitForDeploymentState(waitForDeploymentStateRequest);
   }
 
   /**
@@ -254,5 +417,18 @@ public class PublishMojo
     catch (Exception e) {
       throw new RuntimeException("Unable to get publisher server properties for server id: " + publishingServerId, e);
     }
+  }
+
+  private void outputWhereToFinishPublishing(
+      final String centralBaseURL,
+      final WaitUntilRequest waitUntilRequest,
+      final String deploymentId)
+  {
+    getLog().info(format(
+        "Deployment %s has been %s. To finish publishing visit %s/publishing/deployments",
+        deploymentId,
+        waitUntilRequest.name().toLowerCase(),
+        centralBaseURL
+    ));
   }
 }

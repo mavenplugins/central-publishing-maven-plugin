@@ -4,15 +4,18 @@
  */
 package org.sonatype.central.publisher.plugin.uploader;
 
-import java.util.Objects;
-
 import org.sonatype.central.publisher.client.PublisherClient;
 import org.sonatype.central.publisher.client.PublisherClientFactory;
+import org.sonatype.central.publisher.client.model.PublishingType;
+import org.sonatype.central.publisher.plugin.exceptions.DeploymentPublishFailedException;
 import org.sonatype.central.publisher.plugin.model.UploadArtifactRequest;
 
 import org.codehaus.plexus.component.annotations.Component;
 import org.codehaus.plexus.component.annotations.Requirement;
 import org.codehaus.plexus.logging.AbstractLogEnabled;
+
+import static java.lang.String.format;
+import static java.util.Objects.requireNonNullElseGet;
 
 @Component(role = ArtifactUploader.class)
 public class ArtifactUploaderImpl
@@ -26,8 +29,7 @@ public class ArtifactUploaderImpl
   public ArtifactUploaderImpl() { }
 
   ArtifactUploaderImpl(final PublisherClient publisherClient) {
-    this.publisherClient =
-        Objects.requireNonNullElseGet(publisherClient, PublisherClientFactory::createPublisherClient);
+    this.publisherClient = requireNonNullElseGet(publisherClient, PublisherClientFactory::createPublisherClient);
   }
 
   @Override
@@ -35,20 +37,44 @@ public class ArtifactUploaderImpl
     if (getLogger() != null) {
       getLogger().info("Going to upload " + uploadArtifactRequest.getBundleFile());
     }
+
     try {
-      String deploymentId =
-          publisherClient.upload(uploadArtifactRequest.getDeploymentName(), uploadArtifactRequest.getBundleFile(), uploadArtifactRequest.getPublishingType());
+      String deploymentId = publisherClient.upload(
+          uploadArtifactRequest.getDeploymentName(),
+          uploadArtifactRequest.getBundleFile(),
+          uploadArtifactRequest.getPublishingType()
+      );
+
       if (getLogger() != null) {
-        getLogger().info("Uploaded bundle successfully, deployment name: " + uploadArtifactRequest.getDeploymentName() +
-            ", deploymentId: " + deploymentId);
+        getLogger().info(
+            format("Uploaded bundle successfully, deployment name: %s, deploymentId: %s. Deployment will %s",
+                uploadArtifactRequest.getDeploymentName(), deploymentId,
+                toPublishingTypeMessage(uploadArtifactRequest))
+        );
       }
+
       return deploymentId;
     }
     catch (Exception e) {
       if (getLogger() != null) {
         getLogger().error("Unable to upload bundle for deployment: " + uploadArtifactRequest.getDeploymentName(), e);
       }
-      return null;
+
+      throw new DeploymentPublishFailedException(uploadArtifactRequest.getDeploymentName());
     }
+  }
+
+  private String toPublishingTypeMessage(final UploadArtifactRequest uploadArtifactRequest) {
+    PublishingType publishingType = uploadArtifactRequest.getPublishingType();
+
+    switch (publishingType) {
+      case USER_MANAGED:
+        return "require manual publishing";
+      case AUTOMATIC:
+        return "publish automatically";
+    }
+
+    // should never be reached
+    return "";
   }
 }
