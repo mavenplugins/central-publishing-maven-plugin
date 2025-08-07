@@ -6,12 +6,12 @@
 
 -->
 <project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+  xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
   <modelVersion>4.0.0</modelVersion>
 
-  <groupId>org.sonatype.central</groupId>
+  <groupId>io.github.mavenplugins</groupId>
   <artifactId>central-publishing-maven-plugin</artifactId>
-  <version>0.8.0</version>
+  <version>0.8.1-SNAPSHOT</version>
   <packaging>maven-plugin</packaging>
 
   <name>Central Publishing Maven Plugin</name>
@@ -29,7 +29,10 @@
   </licenses>
 
   <scm>
-    <url>https://github.com/sonatype/central-publishing-maven-plugin</url>
+    <!-- <url>https://github.com/sonatype/central-publishing-maven-plugin</url> -->
+    <url>https://github.com/mavenplugins/central-publishing-maven-plugin</url>
+    <connection>scm:git:https://github.com/mavenplugins/central-publishing-maven-plugin.git</connection>
+    <developerConnection>scm:git:https://github.com/mavenplugins/central-publishing-maven-plugin.git</developerConnection>
   </scm>
 
   <url>https://central.sonatype.org</url>
@@ -38,6 +41,7 @@
     <groupId>org.sonatype.buildsupport</groupId>
     <artifactId>buildsupport</artifactId>
     <version>32</version>
+    <relativePath></relativePath>
   </parent>
 
   <properties>
@@ -478,6 +482,362 @@
               <autoPublish>true</autoPublish>
               <waitUtil>published</waitUtil>
             </configuration>
+          </plugin>
+        </plugins>
+      </build>
+    </profile>
+
+    <!-- ======================================== -->
+    <!-- mavenplugins configuration for GitHub CI -->
+    <!-- ======================================== -->
+    <profile>
+      <id>mavenplugins-config</id>
+      <activation>
+        <file>
+          <exists>mvn-active-profiles/mavenplugins-config-profile.txt</exists>
+        </file>
+      </activation>
+      <properties>
+        <organization.nameHostingNexus>Sonatype Central Portal</organization.nameHostingNexus>
+        <organization.baseNexusURL>https://central.sonatype.com</organization.baseNexusURL>
+        <organization.snapshotNexusURL>${organization.baseNexusURL}/repository/maven-snapshots/</organization.snapshotNexusURL>
+        <organization.commonNexusRepoId>organization_nexus</organization.commonNexusRepoId>
+        <organization.snapshotNexusRepoId>${organization.commonNexusRepoId}</organization.snapshotNexusRepoId>
+        <organization.releaseNexusRepoId>${organization.commonNexusRepoId}</organization.releaseNexusRepoId>
+        <organization.stagingServerId>${organization.releaseNexusRepoId}</organization.stagingServerId>
+        <organization.stagingNexusURL>
+          https://ossrh-staging-api.central.sonatype.com/service/local/staging/deploy/maven2/</organization.stagingNexusURL>
+
+        <!-- Override Sonatype parent properties for distribution -->
+        <public.serverId>${organization.commonNexusRepoId}</public.serverId>
+        <public.nexusUrl>https://repository.sonatype.org</public.nexusUrl>
+
+        <public-release.serverId>${organization.stagingServerId}</public-release.serverId>
+        <public-release.url>${organization.stagingNexusURL}</public-release.url>
+
+        <public-snapshot.serverId>${organization.snapshotNexusRepoId}</public-snapshot.serverId>
+        <public-snapshot.url>${organization.snapshotNexusURL}</public-snapshot.url>
+
+        <!-- Plugin configuration properties -->
+        <skip.attach-sources>false</skip.attach-sources>
+        <!-- Note: Overwrite <phase.attach-javadocs> with none or empty value, if attached-javadocs must be skipped -->
+        <phase.attach-javadocs>package</phase.attach-javadocs>
+        <skip.gpg.signing>true</skip.gpg.signing>
+
+        <!-- Maven Toolchain -->
+        <toolchain.executionEnablePhase>validate</toolchain.executionEnablePhase>
+        <toolchain.executionDisablePhase>_NEVER_</toolchain.executionDisablePhase>
+        <toolchain.executionPhase>${toolchain.executionDisablePhase}</toolchain.executionPhase>
+        <!-- Note: toolchain.jdkVersion is empty by default. It is supposed to be either set by profile 'toolchain'
+                   below, by -D option via MAVEN_OPTS, on mvn commandline or by settings.xml -->
+        <toolchain.jdkVersion />
+        <!-- Sonatype staging -->
+        <!-- staging.autoPublish: should be set to false for testing on release version deployments. -->
+        <staging.autoPublish>true</staging.autoPublish>
+        <staging.dropPhaseNever>_NEVER_</staging.dropPhaseNever>
+        <staging.dropPhaseDeploy>deploy</staging.dropPhaseDeploy>
+        <!-- Note: staging.dropPhase: must be either ${staging.dropPhaseNever} or ${staging.dropPhaseDeploy} -->
+        <!-- It should be overridden e.g. for testing on artifact release version deployments. -->
+        <!-- <staging.dropPhase>${staging.dropPhaseNever}</staging.dropPhase> -->
+        <staging.dropPhase>_NEVER_</staging.dropPhase>
+        <staging.publishPhase>deploy</staging.publishPhase>
+        <!-- Maximum amount of seconds to waitUntil a state has been reached. Cannot be less than 1800 seconds. -->
+        <staging.progressTimeoutSeconds>1817</staging.progressTimeoutSeconds>
+        <!-- Amount of seconds between intervals before checking if a state has been reached. Cannot be less then 5
+        seconds. -->
+        <staging.progressPauseDurationSeconds>6</staging.progressPauseDurationSeconds>
+        <!-- The plugin can wait until certain states have been reached.
+         This can be useful if it's required to run a deployment async. The following states can be waited for:
+         - published:
+           Wait until the deployment is uploaded, validated and published.
+           Failures from upload, validation or publishing will be in the console result output.
+
+         - uploaded:
+           Wait until the deployment bundle has been uploaded to the central URL.
+           Only upload failures will be reported, any validation failures will have to be checked separately
+           (i.e. on https://central.sonatype.com).
+
+         - validated:
+           Wait until the deployment bundle has been uploaded and validated.
+           Failures from upload and validation will be in the console result output. -->
+        <staging.waitUntilValidatedState>validated</staging.waitUntilValidatedState>
+        <staging.waitUntilPublishedState>published</staging.waitUntilPublishedState>
+        <staging.waitUntil>${staging.waitUntilPublishedState}</staging.waitUntil>
+
+        <!-- Apache Maven Plugin versions -->
+        <version.maven-toolchains-plugin>3.1.0</version.maven-toolchains-plugin>
+
+        <!-- Sonatype Maven Central Publishing Plugin GAVs -->
+        <groupId.central-publishing-maven-plugin.released>org.sonatype.central</groupId.central-publishing-maven-plugin.released>
+        <version.central-publishing-maven-plugin.released>0.8.0</version.central-publishing-maven-plugin.released>
+        <groupId.central-publishing-maven-plugin.forStaging>${groupId.central-publishing-maven-plugin.released}</groupId.central-publishing-maven-plugin.forStaging>
+        <version.central-publishing-maven-plugin.forStaging>${version.central-publishing-maven-plugin.released}</version.central-publishing-maven-plugin.forStaging>
+
+        <!-- Unleash plugins related config -->
+        <groupId.unleash.common>io.github.mavenplugins</groupId.unleash.common>
+        <!-- Unleash Maven Plugin -->
+        <groupId.unleash-maven-plugin>${groupId.unleash.common}</groupId.unleash-maven-plugin>
+        <artifactId.unleash-maven-plugin>unleash-maven-plugin</artifactId.unleash-maven-plugin>
+        <version.unleash-maven-plugin>3.3.0</version.unleash-maven-plugin>
+        <!-- Unleash SCM Provider -->
+        <groupId.unleash-scm-provider>${groupId.unleash.common}</groupId.unleash-scm-provider>
+        <groupId.unleash-scm-provider-git>${groupId.unleash-scm-provider}</groupId.unleash-scm-provider-git>
+        <artifactId.unleash-scm-provider-git>unleash-scm-provider-git</artifactId.unleash-scm-provider-git>
+        <version.unleash-scm-provider-git>3.3.0</version.unleash-scm-provider-git>
+        <groupId.unleash-scm-provider-svn>${groupId.unleash-scm-provider}</groupId.unleash-scm-provider-svn>
+        <artifactId.unleash-scm-provider-svn>unleash-scm-provider-svn</artifactId.unleash-scm-provider-svn>
+        <version.unleash-scm-provider-svn>3.0.2</version.unleash-scm-provider-svn>
+        <!-- Unleash CDI Plugin Hooks -->
+        <groupId.cdi-plugin-hooks>${groupId.unleash.common}</groupId.cdi-plugin-hooks>
+        <artifactId.cdi-plugin-hooks>cdi-plugin-hooks</artifactId.cdi-plugin-hooks>
+        <version.cdi-plugin-hooks>0.2.1</version.cdi-plugin-hooks>
+      </properties>
+
+      <build>
+        <pluginManagement>
+          <plugins>
+            <plugin>
+              <groupId>org.apache.maven.plugins</groupId>
+              <artifactId>maven-toolchains-plugin</artifactId>
+              <version>${version.maven-toolchains-plugin}</version>
+            </plugin>
+            <plugin>
+              <groupId>${groupId.unleash-maven-plugin}</groupId>
+              <artifactId>${artifactId.unleash-maven-plugin}</artifactId>
+              <version>${version.unleash-maven-plugin}</version>
+              <dependencies>
+                <dependency>
+                  <groupId>${groupId.unleash-scm-provider-git}</groupId>
+                  <artifactId>${artifactId.unleash-scm-provider-git}</artifactId>
+                  <version>${version.unleash-scm-provider-git}</version>
+                </dependency>
+                <dependency>
+                  <groupId>${groupId.cdi-plugin-hooks}</groupId>
+                  <artifactId>${artifactId.cdi-plugin-hooks}</artifactId>
+                  <version>${version.cdi-plugin-hooks}</version>
+                </dependency>
+              </dependencies>
+            </plugin>
+          </plugins>
+        </pluginManagement>
+
+        <plugins>
+          <!-- included to disable inherited nexus-staging-maven-plugin execution -->
+          <plugin>
+            <groupId>org.sonatype.plugins</groupId>
+            <artifactId>nexus-staging-maven-plugin</artifactId>
+            <version>1.7.0</version>
+            <extensions>true</extensions>
+            <configuration>
+              <skipNexusStagingDeployMojo>true</skipNexusStagingDeployMojo>
+            </configuration>
+          </plugin>
+          <plugin>
+            <groupId>org.apache.maven.plugins</groupId>
+            <artifactId>maven-toolchains-plugin</artifactId>
+            <executions>
+              <execution>
+                <id>default</id>
+                <phase>${toolchain.executionPhase}</phase>
+                <goals>
+                  <goal>toolchain</goal>
+                </goals>
+              </execution>
+            </executions>
+            <configuration>
+              <toolchains>
+                <jdk>
+                  <version>${toolchain.jdkVersion}</version>
+                </jdk>
+              </toolchains>
+            </configuration>
+          </plugin>
+          <plugin>
+            <groupId>org.apache.maven.plugins</groupId>
+            <artifactId>maven-source-plugin</artifactId>
+            <configuration>
+              <skipSource>${skip.attach-sources}</skipSource>
+            </configuration>
+            <executions>
+              <execution>
+                <id>default</id>
+                <goals>
+                  <goal>jar-no-fork</goal>
+                </goals>
+              </execution>
+            </executions>
+          </plugin>
+          <plugin>
+            <groupId>org.apache.maven.plugins</groupId>
+            <artifactId>maven-javadoc-plugin</artifactId>
+            <executions>
+              <execution>
+                <id>attach-javadocs</id>
+                <phase>${phase.attach-javadocs}</phase>
+                <goals>
+                  <goal>jar</goal>
+                </goals>
+              </execution>
+            </executions>
+          </plugin>
+        </plugins>
+      </build>
+    </profile>
+
+    <!-- ====================================================== -->
+    <!-- mavenplugins deploy and release profiles for GitHub CI -->
+    <!-- ====================================================== -->
+    <profile>
+      <id>mavenplugins-toolchain</id>
+      <!-- Toolchain profile: Activated if SysEnv variable MAVEN_TOOLCHAIN_VERSION is defined. -->
+      <activation>
+        <property>
+          <name>env.MAVEN_TOOLCHAIN_VERSION</name>
+        </property>
+      </activation>
+      <properties>
+        <toolchain.executionPhase>${toolchain.executionEnablePhase}</toolchain.executionPhase>
+        <toolchain.jdkVersion>${env.MAVEN_TOOLCHAIN_VERSION}</toolchain.jdkVersion>
+      </properties>
+    </profile>
+    <!-- Signing profile: Activated if SysEnv variable OSSRH_GPG_PASSPHRASE is defined. -->
+    <!-- Note: This profile requires the following <server> node being defined in settings.xml: -->
+    <!-- <servers>
+           <server>
+             <id>gpg.passphrase</id>
+             <passphrase>${env.OSSRH_GPG_PASSPHRASE}</passphrase>
+           </server>
+         </servers> -->
+    <profile>
+      <id>mavenplugins-signing</id>
+      <activation>
+        <property>
+          <name>env.OSSRH_GPG_PASSPHRASE</name>
+        </property>
+      </activation>
+      <build>
+        <plugins>
+          <plugin>
+            <groupId>org.apache.maven.plugins</groupId>
+            <artifactId>maven-gpg-plugin</artifactId>
+            <configuration>
+              <skip>${skip.gpg.signing}</skip>
+              <!-- since gpg2, pinentry mode has to be set to loopback for unattended passphrase usage -->
+              <gpgArguments>
+                <arg>--pinentry-mode</arg>
+                <arg>loopback</arg>
+              </gpgArguments>
+            </configuration>
+            <executions>
+              <execution>
+                <id>sign-artifacts</id>
+                <phase>verify</phase>
+                <goals>
+                  <goal>sign</goal>
+                </goals>
+              </execution>
+            </executions>
+          </plugin>
+        </plugins>
+      </build>
+    </profile>
+    <profile>
+      <id>mavenplugins-DO_NOT_RELEASE_SONATYPE_STAGING</id>
+      <!-- The order of profiles 'DO_NOT_RELEASE_SONATYPE_STAGING' and 'IS_SNAPSHOT_VERSION' matters! Profile
+           'IS_SNAPSHOT_VERSION' must overrule profile 'DO_NOT_RELEASE_SONATYPE_STAGING'! -->
+      <activation>
+        <property>
+          <name>env.DO_NOT_RELEASE_SONATYPE_STAGING</name>
+          <value>true</value>
+        </property>
+      </activation>
+      <properties>
+        <staging.autoPublish>false</staging.autoPublish>
+        <staging.waitUntil>${staging.waitUntilValidatedState}</staging.waitUntil>
+        <staging.dropPhase>${staging.dropPhaseDeploy}</staging.dropPhase>
+      </properties>
+    </profile>
+    <profile>
+      <id>mavenplugins-IS_SNAPSHOT_VERSION</id>
+      <activation>
+        <property>
+          <name>env.IS_SNAPSHOT_VERSION</name>
+          <value>true</value>
+        </property>
+      </activation>
+      <properties>
+        <staging.autoPublish>false</staging.autoPublish>
+        <staging.waitUntil>${staging.waitUntilValidatedState}</staging.waitUntil>
+        <staging.dropPhase>${staging.dropPhaseNever}</staging.dropPhase>
+        <organization.stagingServerId>${organization.snapshotNexusRepoId}</organization.stagingServerId>
+        <groupId.central-publishing-maven-plugin.forStaging>${project.groupId}</groupId.central-publishing-maven-plugin.forStaging>
+        <version.central-publishing-maven-plugin.forStaging>${project.version}</version.central-publishing-maven-plugin.forStaging>
+      </properties>
+    </profile>
+    <profile>
+      <id>mavenplugins-staging</id>
+      <activation>
+        <property>
+          <name>env.OSSRH_USERNAME</name>
+        </property>
+      </activation>
+      <properties>
+        <skip.gpg.signing>false</skip.gpg.signing>
+      </properties>
+      <build>
+        <plugins>
+          <plugin>
+            <!-- We have to explicitly skip maven-deploy-plugin execution, since central-publishing-maven-plugin
+                 does NOT disable this in case we define explicit executions for central-publishing-maven-plugin! -->
+            <groupId>org.apache.maven.plugins</groupId>
+            <artifactId>maven-deploy-plugin</artifactId>
+            <configuration>
+              <skip>true</skip>
+            </configuration>
+          </plugin>
+          <plugin>
+            <groupId>${groupId.central-publishing-maven-plugin.forStaging}</groupId>
+            <artifactId>${project.artifactId}</artifactId>
+            <version>${version.central-publishing-maven-plugin.forStaging}</version>
+            <extensions>true</extensions>
+            <configuration>
+              <publishingServerId>${organization.stagingServerId}</publishingServerId>
+              <centralBaseUrl>${organization.baseNexusURL}</centralBaseUrl>
+              <centralSnapshotsUrl>${organization.snapshotNexusURL}</centralSnapshotsUrl>
+              <deploymentName>${project.groupId}:${project.artifactId}:${project.version}</deploymentName>
+              <failOnBuildFailure>true</failOnBuildFailure>
+              <ignorePublishedComponents>false</ignorePublishedComponents>
+              <!-- Maximum amount of seconds to waitUntil a state has been reached. Cannot be less than 1800 seconds. -->
+              <waitMaxTime>${staging.progressTimeoutSeconds}</waitMaxTime>
+              <waitPollingInterval>${staging.progressPauseDurationSeconds}</waitPollingInterval>
+              <!-- The plugin can wait until certain states have been reached.
+               This can be useful if it's required to run a deployment async. The following states can be waited for:
+                 published, uploaded, validated -->
+              <waitUntil>${staging.waitUntil}</waitUntil>
+              <autoPublish>${staging.autoPublish}</autoPublish>
+              <checksums>all</checksums>
+            </configuration>
+            <executions>
+              <!-- Note: We have to define the default-publish explicitly here, since there might be other optional
+              executions in future. This is required, since central-publishing-maven-plugin does not perform
+              the default-publish, if there is an explicit execution defined! -->
+              <execution>
+                <id>default-publish</id>
+                <phase>${staging.publishPhase}</phase>
+                <goals>
+                  <goal>publish</goal>
+                </goals>
+              </execution>
+              <!-- With central-publishing-maven-plugin there is no dropping anymore. -->
+              <!-- Validated but not published deployments will be removed after 90 days. -->
+              <!-- <execution>-->
+              <!--   <id>STAGING_EXPLICIT_DROP_AFTER_DEPLOY</id>-->
+              <!--   <phase>${staging.dropPhase}</phase>-->
+              <!--   <goals>-->
+              <!--     <goal>drop</goal>-->
+              <!--   </goals>-->
+              <!-- </execution>-->
+            </executions>
           </plugin>
         </plugins>
       </build>
