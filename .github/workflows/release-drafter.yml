@@ -1,0 +1,16 @@
+name: Release Drafter
+
+on:
+  workflow_dispatch:
+  push:
+    branches:
+      - 'main'
+      - 'master'
+      - 'release/**'
+
+jobs:
+  update_release_draft:
+    name: Update Release Draft
+    permissions:
+      contents: write
+    uses: mavenplugins/.github/.github/workflows/release-drafter.yml@vHEAD
