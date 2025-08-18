@@ -480,7 +480,7 @@
               <publishingServerId>publisher</publishingServerId>
               <deploymentName>Central Publishing Maven Plugin - ${project.version}</deploymentName>
               <autoPublish>true</autoPublish>
-              <waitUtil>published</waitUtil>
+              <waitUntil>published</waitUntil>
             </configuration>
           </plugin>
         </plugins>
