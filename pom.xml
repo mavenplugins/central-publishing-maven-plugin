@@ -1,17 +1,14 @@
-<?xml version="1.0" encoding="UTF-8"?>
-<!--
+<?xml version="1.0" encoding="UTF-8" standalone="no"?><!--
 
     Copyright (c) 2022-present Sonatype, Inc. All rights reserved.
     "Sonatype" is a trademark of Sonatype, Inc.
 
--->
-<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-  xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+--><project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
   <modelVersion>4.0.0</modelVersion>
 
   <groupId>io.github.mavenplugins</groupId>
   <artifactId>central-publishing-maven-plugin</artifactId>
-  <version>0.8.1-SNAPSHOT</version>
+  <version>0.8.1</version>
   <packaging>maven-plugin</packaging>
 
   <name>Central Publishing Maven Plugin</name>
@@ -33,6 +30,7 @@
     <url>https://github.com/mavenplugins/central-publishing-maven-plugin</url>
     <connection>scm:git:https://github.com/mavenplugins/central-publishing-maven-plugin.git</connection>
     <developerConnection>scm:git:https://github.com/mavenplugins/central-publishing-maven-plugin.git</developerConnection>
+<tag>v0.8.1</tag>
   </scm>
 
   <url>https://central.sonatype.org</url>
@@ -41,7 +39,7 @@
     <groupId>org.sonatype.buildsupport</groupId>
     <artifactId>buildsupport</artifactId>
     <version>32</version>
-    <relativePath></relativePath>
+    <relativePath/>
   </parent>
 
   <properties>
@@ -530,7 +528,7 @@
         <toolchain.executionPhase>${toolchain.executionDisablePhase}</toolchain.executionPhase>
         <!-- Note: toolchain.jdkVersion is empty by default. It is supposed to be either set by profile 'toolchain'
                    below, by -D option via MAVEN_OPTS, on mvn commandline or by settings.xml -->
-        <toolchain.jdkVersion />
+        <toolchain.jdkVersion/>
         <!-- Sonatype staging -->
         <!-- staging.autoPublish: should be set to false for testing on release version deployments. -->
         <staging.autoPublish>true</staging.autoPublish>
