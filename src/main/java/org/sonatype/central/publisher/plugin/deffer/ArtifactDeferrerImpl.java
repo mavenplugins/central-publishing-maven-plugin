@@ -106,7 +106,7 @@ public class ArtifactDeferrerImpl
    * @param request - {@link DeferArtifactRequest}
    * @throws ArtifactInstallationException - if the artifact installation fails
    * @throws MojoExecutionException        - if the staging directory is null or the artifact repo cannot be created
-   * @see ArtifactDeferrer#install(File, Artifact, ArtifactRepository, File, ArtifactRepository)
+   * @see #install(File, Artifact, ArtifactRepository, File, ArtifactRepository)
    */
   @Override
   @SuppressWarnings("deprecation")
