@@ -33,6 +33,8 @@ jobs:
     uses: mavenplugins/reusable-gh-actions/.github/workflows/__maven_unleash.yml@master
     with:
       runner: ubuntu-latest
+      javaHomeVersion: '17'
+      mavenVersion: '3.9.6'
       releaseVersion: ${{ inputs.releaseVersion }}
       nextSnapshotVersion: ${{ inputs.nextSnapshotVersion }}
       releaseToMavenCentral: ${{ inputs.releaseToMavenCentral }}
@@ -46,6 +48,8 @@ jobs:
     uses: mavenplugins/reusable-gh-actions/.github/workflows/__maven_clean_deploy.yml@master
     with:
       runner: ubuntu-latest
+      javaHomeVersion: '17'
+      mavenVersion: '3.9.6'
       deploy_snapshots_only: true
 
     secrets: inherit

@@ -26,6 +26,8 @@ jobs:
     uses: mavenplugins/reusable-gh-actions/.github/workflows/__maven_clean_deploy.yml@master
     with:
       runner: ubuntu-latest
+      javaHomeVersion: '17'
+      mavenVersion: '3.9.6'
       # Allow to deploy release version to test staging validation on OSSRH
       # Note: A release version will NOT be relased to Maven Central by this workflow!
       # Releasing to Maven Central will be performed via Unleash workflow only
