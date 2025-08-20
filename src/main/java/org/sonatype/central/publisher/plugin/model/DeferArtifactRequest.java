@@ -24,11 +24,11 @@ public class DeferArtifactRequest
   /**
    * Constructor
    *
-   * @param mavenSession        - {@link MavenSession}
-   * @param artifactWithFiles   - {@link List} of {@link ArtifactWithFile}
-   * @param deferredDirectory   - {@link File} directory to defer the artifacts
+   * @param mavenSession - {@link MavenSession}
+   * @param artifactWithFiles - {@link List} of {@link ArtifactWithFile}
+   * @param deferredDirectory - {@link File} directory to defer the artifacts
    * @param centralSnapshotsUrl - {@link String} URL of the central snapshots
-   * @param serverId  - {@link String} server id
+   * @param serverId - {@link String} server id
    */
   public DeferArtifactRequest(
       final MavenSession mavenSession,

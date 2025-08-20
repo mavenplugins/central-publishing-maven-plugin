@@ -7,5 +7,6 @@ package org.sonatype.central.publisher.client.httpclient;
 
 public enum RequestType
 {
-  POST, GET
+  POST,
+  GET
 }

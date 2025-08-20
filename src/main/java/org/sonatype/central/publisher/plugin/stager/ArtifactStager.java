@@ -11,6 +11,6 @@ import org.apache.maven.plugin.MojoExecutionException;
 
 public interface ArtifactStager
 {
-  void stageArtifact(final StageArtifactRequest stageArtifactRequest)
-      throws MojoExecutionException, ArtifactInstallationException;
+  void stageArtifact(
+      final StageArtifactRequest stageArtifactRequest) throws MojoExecutionException, ArtifactInstallationException;
 }

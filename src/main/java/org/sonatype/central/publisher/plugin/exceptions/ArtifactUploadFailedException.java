@@ -5,7 +5,8 @@
 
 package org.sonatype.central.publisher.plugin.exceptions;
 
-public class ArtifactUploadFailedException extends RuntimeException
+public class ArtifactUploadFailedException
+    extends RuntimeException
 {
   public ArtifactUploadFailedException(String deploymentName, Exception e) {
     super("Artifact for deployment " + deploymentName + " failed while uploading", e);

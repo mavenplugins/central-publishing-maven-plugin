@@ -38,7 +38,8 @@ public class DeploymentPublishedWatcherImpl
   private PurlUtils purlUtils;
 
   @SuppressWarnings("unused") // used via reflection by Plexus
-  public DeploymentPublishedWatcherImpl() { }
+  public DeploymentPublishedWatcherImpl() {
+  }
 
   DeploymentPublishedWatcherImpl(PublisherClient publisherClient, PurlUtils purlUtils) {
     this.publisherClient = publisherClient;
@@ -57,8 +58,8 @@ public class DeploymentPublishedWatcherImpl
         "Waiting until Deployment %s is %s", deploymentId, waitForDeploymentStateRequest.waitTypeName()));
 
     try {
-      while (Duration.between(start, Instant.now()).get(SECONDS) <
-          waitForDeploymentStateRequest.getWaitMaxTimeInSeconds()) {
+      while (Duration.between(start, Instant.now()).get(SECONDS) < waitForDeploymentStateRequest
+          .getWaitMaxTimeInSeconds()) {
 
         // convert to milliseconds
         Integer interval = waitForDeploymentStateRequest.getWaitPollingIntervalInSeconds() * 1000;
@@ -160,7 +161,6 @@ public class DeploymentPublishedWatcherImpl
         "Deployment %s has been %s. To finish publishing visit %s/publishing/deployments",
         deploymentId,
         waitForDeploymentStateRequest.waitTypeName(),
-        waitForDeploymentStateRequest.getCentralBaseUrl()
-    ));
+        waitForDeploymentStateRequest.getCentralBaseUrl()));
   }
 }

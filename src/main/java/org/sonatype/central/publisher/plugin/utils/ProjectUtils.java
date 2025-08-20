@@ -16,15 +16,16 @@ import org.apache.maven.project.MavenProject;
 
 public interface ProjectUtils
 {
-  List<ArtifactWithFile> getArtifacts(final MavenProject mavenProject, final ArtifactFactory artifactFactory)
-      throws MojoExecutionException;
+  List<ArtifactWithFile> getArtifacts(
+      final MavenProject mavenProject,
+      final ArtifactFactory artifactFactory) throws MojoExecutionException;
 
   /**
    * Delete {@link ProjectUtilsImpl#MAVEN_METADATA_CENTRAL_STAGING_XML} from the Group and Artifact ID directory of a
    * {@link MavenProject} within the given {@code sourceDir} If the {@link MavenProject} has a parent and is a module,
    * the parent and its child modules will have the xml removed as well.
    *
-   * @param project   - {@link MavenProject}
+   * @param project - {@link MavenProject}
    * @param sourceDir - {@link Path}
    */
   void deleteGroupArtifactMavenMetadataCentralStagingXml(final MavenProject project, final Path sourceDir);
@@ -36,8 +37,8 @@ public interface ProjectUtils
    * <p>
    * This method doesn't recursively go through child folders.
    *
-   * @param project         - {@link MavenProject}
-   * @param sourceDir       - {@link Path}
+   * @param project - {@link MavenProject}
+   * @param sourceDir - {@link Path}
    * @param checksumRequest - {@link ChecksumRequest}
    */
   void createChecksumFiles(final MavenProject project, final Path sourceDir, final ChecksumRequest checksumRequest);

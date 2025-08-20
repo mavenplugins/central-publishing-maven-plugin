@@ -88,8 +88,7 @@ public class PublishMojo
    */
   @Parameter(
       property = WAIT_UNTIL_NAME,
-      defaultValue = WAIT_UNTIL_DEFAULT_VALUE
-  )
+      defaultValue = WAIT_UNTIL_DEFAULT_VALUE)
   private String waitUntil;
 
   /**
@@ -98,8 +97,7 @@ public class PublishMojo
    */
   @Parameter(
       property = WAIT_MAX_TIME_NAME,
-      defaultValue = WAIT_MAX_TIME_DEFAULT_VALUE
-  )
+      defaultValue = WAIT_MAX_TIME_DEFAULT_VALUE)
   private int waitMaxTime;
 
   /**
@@ -108,8 +106,7 @@ public class PublishMojo
    */
   @Parameter(
       property = WAIT_POLLING_INTERVAL_NAME,
-      defaultValue = WAIT_POLLING_INTERVAL_DEFAULT_VALUE
-  )
+      defaultValue = WAIT_POLLING_INTERVAL_DEFAULT_VALUE)
   private int waitPollingInterval;
 
   /**
@@ -118,8 +115,7 @@ public class PublishMojo
   @Deprecated
   @Parameter(
       property = PUBLISH_COMPLETION_POLL_INTERVAL_NAME,
-      defaultValue = PUBLISH_COMPLETION_POLL_INTERVAL_DEFAULT_VALUE
-  )
+      defaultValue = PUBLISH_COMPLETION_POLL_INTERVAL_DEFAULT_VALUE)
   private int publishCompletionPollInterval;
 
   /**
@@ -216,8 +212,7 @@ public class PublishMojo
       getLog().warn(format(
           "%s is deprecated, using it will set %s (converted to seconds).",
           PUBLISH_COMPLETION_POLL_INTERVAL_NAME,
-          WAIT_MAX_TIME_NAME
-      ));
+          WAIT_MAX_TIME_NAME));
 
       // only update waitPollingInterval if it was still set to the default
       if (waitPollingInterval == waitPollingIntervalDefault) {
@@ -230,8 +225,7 @@ public class PublishMojo
       getLog().warn(format(
           "%s was set to be less then %2$s seconds, will use the default of %2$s seconds.",
           WAIT_POLLING_INTERVAL_NAME,
-          WAIT_POLLING_INTERVAL_DEFAULT_VALUE
-      ));
+          WAIT_POLLING_INTERVAL_DEFAULT_VALUE));
 
       waitPollingInterval = waitPollingIntervalDefault;
     }
@@ -242,8 +236,7 @@ public class PublishMojo
       getLog().warn(format(
           "%s was set to be less then %2$s seconds, will use the default of %2$s seconds.",
           WAIT_MAX_TIME_NAME,
-          WAIT_MAX_TIME_DEFAULT_VALUE
-      ));
+          WAIT_MAX_TIME_DEFAULT_VALUE));
 
       waitMaxTime = waitMaxTimeDefault;
     }
@@ -251,8 +244,7 @@ public class PublishMojo
     if (!ChecksumRequest.isValidValue(checksums)) {
       throw new MojoExecutionException(format("%s must be one of the following values %s.",
           CHECKSUMS_NAME,
-          ChecksumRequest.toNames())
-      );
+          ChecksumRequest.toNames()));
     }
 
     checksumRequest = ChecksumRequest.valueOf(checksums.toUpperCase());
@@ -260,8 +252,7 @@ public class PublishMojo
     if (!WaitUntilRequest.isValidValue(waitUntil)) {
       throw new MojoExecutionException(format("%s must be one of the following values %s.",
           WAIT_UNTIL_NAME,
-          WaitUntilRequest.toNames())
-      );
+          WaitUntilRequest.toNames()));
     }
 
     waitUntilRequest = WaitUntilRequest.valueOf(waitUntil.toUpperCase());
@@ -273,8 +264,7 @@ public class PublishMojo
           "waitForPublishCompletion is deprecated, using it will set %s to true and %s to %s.",
           AUTO_PUBLISH_NAME,
           WAIT_UNTIL_NAME,
-          WaitUntilRequest.PUBLISHED.name().toLowerCase()
-      ));
+          WaitUntilRequest.PUBLISHED.name().toLowerCase()));
 
       publishingType = PublishingType.AUTOMATIC;
       waitUntilRequest = WaitUntilRequest.PUBLISHED;
@@ -288,8 +278,7 @@ public class PublishMojo
           waitUntilRequest.name().toLowerCase(),
           AUTO_PUBLISH_NAME,
           AUTO_PUBLISH_DEFAULT_VALUE,
-          WaitUntilRequest.VALIDATED.name().toLowerCase()
-      ));
+          WaitUntilRequest.VALIDATED.name().toLowerCase()));
 
       waitUntilRequest = WaitUntilRequest.VALIDATED;
     }
@@ -343,9 +332,7 @@ public class PublishMojo
     }
   }
 
-  private void postProcessSnapshot(final File deferredDirectory)
-      throws MojoExecutionException
-  {
+  private void postProcessSnapshot(final File deferredDirectory) throws MojoExecutionException {
     try {
       if (Files.exists(new File(deferredDirectory, INDEX_FILE_NAME).toPath())) {
 
@@ -366,8 +353,9 @@ public class PublishMojo
     }
   }
 
-  protected void processSnapshot(final List<ArtifactWithFile> artifactWithFiles, final File deferredDirectory)
-      throws MojoExecutionException
+  protected void processSnapshot(
+      final List<ArtifactWithFile> artifactWithFiles,
+      final File deferredDirectory) throws MojoExecutionException
   {
     List<ArtifactWithFile> filteredArtifactWithFiles = artifactWithFiles.stream()
         .filter(artifactWithFile -> !excludeArtifacts.contains(artifactWithFile.getArtifact().getArtifactId()))
@@ -380,17 +368,16 @@ public class PublishMojo
               filteredArtifactWithFiles,
               deferredDirectory,
               centralSnapshotsUrl,
-              publishingServerId
-          )
-      );
+              publishingServerId));
     }
     catch (ArtifactInstallationException e) {
       throw new MojoExecutionException(e.getMessage(), e);
     }
   }
 
-  protected void processRelease(final List<ArtifactWithFile> artifactWithFiles, final File stagingDirectory)
-      throws MojoExecutionException
+  protected void processRelease(
+      final List<ArtifactWithFile> artifactWithFiles,
+      final File stagingDirectory) throws MojoExecutionException
   {
     List<ArtifactWithFile> filteredArtifactWithFiles = artifactWithFiles.stream()
         .filter(artifactWithFile -> {
@@ -404,7 +391,8 @@ public class PublishMojo
           }
 
           return true;
-        }).collect(toList());
+        })
+        .collect(toList());
 
     try {
       artifactStager.stageArtifact(new StageArtifactRequest(filteredArtifactWithFiles, stagingDirectory));
@@ -431,8 +419,7 @@ public class PublishMojo
             stagingDirectory,
             outputDirectory,
             outputFilename,
-            checksumRequest
-        ));
+            checksumRequest));
 
     if (isSkipPublishing()) {
       getLog().info("Skipping Central Release Publishing at user's request.");
@@ -452,8 +439,7 @@ public class PublishMojo
         deploymentId,
         waitUntilRequest,
         waitMaxTime,
-        waitPollingInterval
-    );
+        waitPollingInterval);
 
     deploymentPublishedWatcher.waitForDeploymentState(waitForDeploymentStateRequest);
   }
@@ -468,7 +454,7 @@ public class PublishMojo
    * because the first execution of this plugin cleans the working directory.
    *
    * @param forcedWorkDirectory an override File that points to a valid directory
-   * @param relativePath        a path relative to the working directory root for the folder
+   * @param relativePath a path relative to the working directory root for the folder
    * @return a File that points to a valid empty directory for the plugin to use as temporary working storage
    */
   protected synchronized File getWorkDirectory(final File forcedWorkDirectory, final String relativePath) {
@@ -492,8 +478,7 @@ public class PublishMojo
         getMojoExecution(),
         getPluginGroupId(),
         getPluginArtifactId(),
-        isFailOnBuildFailure()
-    );
+        isFailOnBuildFailure());
   }
 
   private void ensureCleanDirectory(File workingDirectory) {
@@ -555,8 +540,7 @@ public class PublishMojo
         "Deployment %s has been %s. To finish publishing visit %s/publishing/deployments",
         deploymentId,
         waitUntilRequest.name().toLowerCase(),
-        centralBaseURL
-    ));
+        centralBaseURL));
   }
 
   private boolean hasFiles(final File directory) {

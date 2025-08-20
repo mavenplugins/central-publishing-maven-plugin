@@ -5,7 +5,8 @@
 
 package org.sonatype.central.publisher.plugin.exceptions;
 
-public class DeploymentPublishFailedException extends RuntimeException
+public class DeploymentPublishFailedException
+    extends RuntimeException
 {
 
   public DeploymentPublishFailedException(String deploymentId, String deploymentName) {

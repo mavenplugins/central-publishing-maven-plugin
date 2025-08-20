@@ -25,7 +25,8 @@ public class ArtifactUploaderImpl
   private PublisherClient publisherClient;
 
   @SuppressWarnings("unused") // used via reflection by Plexus
-  public ArtifactUploaderImpl() { }
+  public ArtifactUploaderImpl() {
+  }
 
   ArtifactUploaderImpl(final PublisherClient publisherClient) {
     this.publisherClient = publisherClient != null ? publisherClient : PublisherClientFactory.createPublisherClient();
@@ -41,15 +42,13 @@ public class ArtifactUploaderImpl
       String deploymentId = publisherClient.upload(
           uploadArtifactRequest.getDeploymentName(),
           uploadArtifactRequest.getBundleFile(),
-          uploadArtifactRequest.getPublishingType()
-      );
+          uploadArtifactRequest.getPublishingType());
 
       if (getLogger() != null) {
         getLogger().info(
             format("Uploaded bundle successfully, deployment name: %s, deploymentId: %s. Deployment will %s",
                 uploadArtifactRequest.getDeploymentName(), deploymentId,
-                toPublishingTypeMessage(uploadArtifactRequest))
-        );
+                toPublishingTypeMessage(uploadArtifactRequest)));
       }
 
       return deploymentId;

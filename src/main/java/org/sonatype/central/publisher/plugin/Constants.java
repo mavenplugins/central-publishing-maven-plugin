@@ -76,7 +76,8 @@ public class Constants
 
   public static final String CENTRAL_BASE_URL_DEFAULT_VALUE = "https://central.sonatype.com";
 
-  public static final String CENTRAL_SNAPSHOTS_URL_DEFAULT_VALUE = CENTRAL_BASE_URL_DEFAULT_VALUE + "/repository/maven-snapshots/";
+  public static final String CENTRAL_SNAPSHOTS_URL_DEFAULT_VALUE =
+      CENTRAL_BASE_URL_DEFAULT_VALUE + "/repository/maven-snapshots/";
 
   public static final String IGNORE_PUBLISHED_COMPONENTS_NAME = "ignorePublishedComponents";
 

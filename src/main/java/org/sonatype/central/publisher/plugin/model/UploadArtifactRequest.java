@@ -19,8 +19,7 @@ public class UploadArtifactRequest
   public UploadArtifactRequest(
       final String deploymentName,
       final Path bundleFile,
-      final PublishingType publishingType
-  )
+      final PublishingType publishingType)
   {
     this.deploymentName = deploymentName;
     this.bundleFile = bundleFile;

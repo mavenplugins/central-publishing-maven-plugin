@@ -24,15 +24,14 @@ import static org.sonatype.central.publisher.plugin.Constants.CENTRAL_PUBLISHING
 import static org.sonatype.central.publisher.plugin.Constants.DEPLOY_PHASE;
 import static org.sonatype.central.publisher.plugin.Constants.MAVEN_DEPLOY_PLUGIN_ARTIFACT_ID;
 import static org.sonatype.central.publisher.plugin.Constants.MAVEN_DEPLOY_PLUGIN_GROUP_ID;
-import static org.sonatype.central.publisher.plugin.Constants.NEXUS_STAGING_PLUGIN_GROUP_ID;
 import static org.sonatype.central.publisher.plugin.Constants.NEXUS_STAGING_PLUGIN_ARTIFACT_ID;
+import static org.sonatype.central.publisher.plugin.Constants.NEXUS_STAGING_PLUGIN_GROUP_ID;
 import static org.sonatype.central.publisher.plugin.Constants.PUBLISH_GOAL;
 import static org.sonatype.central.publisher.plugin.Constants.PUBLISH_GOAL_ID;
 
 @Component(
     role = AbstractMavenLifecycleParticipant.class,
-    hint = "org.sonatype.central.publisher.plugin.DeployLifecycleParticipant"
-)
+    hint = "org.sonatype.central.publisher.plugin.DeployLifecycleParticipant")
 public class DeployLifecycleParticipant
     extends AbstractMavenLifecycleParticipant
     implements LogEnabled

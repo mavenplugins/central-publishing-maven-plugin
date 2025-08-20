@@ -24,8 +24,7 @@ public class WaitForDeploymentStateRequest
       final String deploymentId,
       final WaitUntilRequest waitUntilRequest,
       final int waitMaxTimeInSeconds,
-      final int waitPollingIntervalInSeconds
-  )
+      final int waitPollingIntervalInSeconds)
   {
     this.centralBaseUrl = centralBaseUrl;
     this.deploymentId = deploymentId;

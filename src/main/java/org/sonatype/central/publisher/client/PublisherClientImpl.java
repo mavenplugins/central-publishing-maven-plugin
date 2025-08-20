@@ -60,7 +60,9 @@ class PublisherClientImpl
 
   @Override
   public PublisherBundle compose(final Path sourceDir, final Path destDir, final String bundleFileName) {
-    return new BundleBuilder(sourceDir).destPath(destDir).bundleName(bundleFileName).addAllSourceFiles()
+    return new BundleBuilder(sourceDir).destPath(destDir)
+        .bundleName(bundleFileName)
+        .addAllSourceFiles()
         .build();
   }
 

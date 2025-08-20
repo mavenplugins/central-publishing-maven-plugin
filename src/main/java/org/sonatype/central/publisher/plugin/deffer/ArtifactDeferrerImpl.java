@@ -55,7 +55,7 @@ import static org.sonatype.central.publisher.plugin.Constants.LOCAL_STAGING_REPO
 /**
  * Implementation of {@link ArtifactDeferrer}.
  * <p>
- * Highly inspired by the  <a href="https://github.com/sonatype/nexus-maven-plugins">nexus-maven-plugin</a>,
+ * Highly inspired by the <a href="https://github.com/sonatype/nexus-maven-plugins">nexus-maven-plugin</a>,
  * specifically the DeferredDeployStrategy and the AbstractDeployStrategy classes
  */
 @Component(role = ArtifactDeferrer.class)
@@ -105,14 +105,12 @@ public class ArtifactDeferrerImpl
    *
    * @param request - {@link DeferArtifactRequest}
    * @throws ArtifactInstallationException - if the artifact installation fails
-   * @throws MojoExecutionException        - if the staging directory is null or the artifact repo cannot be created
+   * @throws MojoExecutionException - if the staging directory is null or the artifact repo cannot be created
    * @see #install(File, Artifact, ArtifactRepository, File, ArtifactRepository)
    */
   @Override
   @SuppressWarnings("deprecation")
-  public void install(final DeferArtifactRequest request)
-      throws ArtifactInstallationException, MojoExecutionException
-  {
+  public void install(final DeferArtifactRequest request) throws ArtifactInstallationException, MojoExecutionException {
     List<ArtifactWithFile> artifactWithFiles = request.getArtifactWithFiles();
     if (null != artifactWithFiles && !artifactWithFiles.isEmpty()) {
       for (ArtifactWithFile artifactWithFile : artifactWithFiles) {
@@ -123,16 +121,14 @@ public class ArtifactDeferrerImpl
         ArtifactRepository deploymentRepository = getDeploymentRepository(
             request.getMavenSession(),
             request.getCentralSnapshotsUrl(),
-            request.getServerId()
-        );
+            request.getServerId());
 
         install(
             artifactWithFile.getFile(),
             artifactWithFile.getArtifact(),
             stagingRepository,
             stagingDirectory,
-            deploymentRepository
-        );
+            deploymentRepository);
       }
     }
   }
@@ -151,17 +147,15 @@ public class ArtifactDeferrerImpl
       final Artifact artifact,
       final ArtifactRepository stagingRepository,
       final File stagingDirectory,
-      final ArtifactRepository remoteRepository)
-      throws ArtifactInstallationException
+      final ArtifactRepository remoteRepository) throws ArtifactInstallationException
   {
     synchronized (PARALLEL_LOCK) {
       String path = stagingRepository.pathOf(artifact);
       try {
         ofNullable(getLogger()).ifPresent(logger -> logger.debug(
-            format("Installing artifact %s into staging repository\n%s", artifact, stagingRepository)
-        ));
+            format("Installing artifact %s into staging repository\n%s", artifact, stagingRepository)));
 
-        artifactInstaller.install(source, artifact, stagingRepository);
+        this.artifactInstaller.install(source, artifact, stagingRepository);
 
         String pluginPrefix = null;
         for (ArtifactMetadata artifactMetadata : artifact.getMetadataList()) {
@@ -173,13 +167,13 @@ public class ArtifactDeferrerImpl
 
         // append the index file
         try (FileOutputStream fos = new FileOutputStream(new File(stagingDirectory, INDEX_FILE_NAME), true);
-             OutputStreamWriter osw = new OutputStreamWriter(fos, ISO_8859_1);
-             PrintWriter pw = new PrintWriter(osw)) {
+            OutputStreamWriter osw = new OutputStreamWriter(fos, ISO_8859_1);
+            PrintWriter pw = new PrintWriter(osw)) {
 
           String pomFileName = null;
           for (ArtifactMetadata artifactMetadata : artifact.getMetadataList()) {
             if (artifactMetadata instanceof ProjectArtifactMetadata) {
-              pomFileName = (artifactMetadata).getLocalFilename(stagingRepository);
+              pomFileName = artifactMetadata.getLocalFilename(stagingRepository);
             }
           }
 
@@ -195,8 +189,7 @@ public class ArtifactDeferrerImpl
                   isBlank(pomFileName) ? "n/a" : pomFileName,
                   isBlank(pluginPrefix) ? "n/a" : pluginPrefix,
                   remoteRepository != null ? remoteRepository.getId() : "n/a",
-                  remoteRepository != null ? remoteRepository.getUrl() : "n/a"
-              ));
+                  remoteRepository != null ? remoteRepository.getUrl() : "n/a"));
 
           pw.flush();
         }
@@ -207,12 +200,12 @@ public class ArtifactDeferrerImpl
     }
   }
 
+  @Override
   @SuppressWarnings("deprecation")
   public void deployUp(
       final MavenSession mavenSession,
       final File sourceDirectory,
-      final ArtifactRepository remoteRepository)
-      throws ArtifactDeploymentException, IOException
+      final ArtifactRepository remoteRepository) throws ArtifactDeploymentException, IOException
   {
     // Need Aether RepoSystem and create one huge DeployRequest will _all_ artifacts (would be FAST as it would
     // go parallel), but we need to work in Maven2 too, so old compat and slow method remains: deploy one by one...
@@ -234,8 +227,7 @@ public class ArtifactDeferrerImpl
 
       if (!matcher.matches()) {
         throw new ArtifactDeploymentException(
-            format("Internal error! Line \"%s\" does not match pattern \"%s\"?", includedFileProps, INDEX_PROPS)
-        );
+            format("Internal error! Line \"%s\" does not match pattern \"%s\"?", includedFileProps, INDEX_PROPS));
       }
 
       String groupId = matcher.group(1);
@@ -268,8 +260,7 @@ public class ArtifactDeferrerImpl
           null,
           packaging,
           classifier,
-          artifactHandler
-      );
+          artifactHandler);
 
       if (pomFileName != null) {
         addPomMetaData(includedFile, pomFileName, artifact);
@@ -279,16 +270,15 @@ public class ArtifactDeferrerImpl
       ofNullable(getLogger()).ifPresent(logger -> logger.debug(
           format("Deploying: %s:%s:%s:%s:%s:%s - file %s:%s: to server id: %s: url: %s",
               groupId, artifactId, version, classifier, packaging,
-              extension, pomFileName, pluginPrefix, repoId, repoUrl)
-      ));
+              extension, pomFileName, pluginPrefix, repoId, repoUrl)));
 
-      artifactDeployer.deploy(includedFile, artifact, repoToUse, mavenSession.getLocalRepository());
+      this.artifactDeployer.deploy(includedFile, artifact, repoToUse, mavenSession.getLocalRepository());
     }
   }
 
   @SuppressWarnings("deprecation")
-  protected ArtifactRepository getArtifactRepositoryForDirectory(final File stagingDirectory)
-      throws MojoExecutionException
+  protected ArtifactRepository getArtifactRepositoryForDirectory(
+      final File stagingDirectory) throws MojoExecutionException
   {
     if (stagingDirectory == null) {
       throw new MojoExecutionException("Staging failed: staging directory is null!");
@@ -309,8 +299,7 @@ public class ArtifactDeferrerImpl
   protected ArtifactRepository getDeploymentRepository(
       final MavenSession mavenSession,
       final String centralSnapshotsUrl,
-      final String publishingServerId)
-      throws MojoExecutionException
+      final String publishingServerId) throws MojoExecutionException
   {
     ArtifactRepository repo;
 
@@ -366,7 +355,8 @@ public class ArtifactDeferrerImpl
 
   @SuppressWarnings("deprecation")
   protected ArtifactRepository createDeploymentArtifactRepository(final String id, final String url) {
-    return artifactRepositoryFactory.createDeploymentArtifactRepository(id, url, artifactRepositoryLayout, true);
+    return this.artifactRepositoryFactory.createDeploymentArtifactRepository(id, url, this.artifactRepositoryLayout,
+        true);
   }
 
   private void addPomMetaData(final File includedFile, final String pomFileName, final DefaultArtifact artifact) {
@@ -420,7 +410,7 @@ public class ArtifactDeferrerImpl
 
     @Override
     public String getExtension() {
-      return extension;
+      return this.extension;
     }
   }
 }

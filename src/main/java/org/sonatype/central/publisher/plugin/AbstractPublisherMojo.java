@@ -89,9 +89,7 @@ public abstract class AbstractPublisherMojo
   }
 
   @Override
-  public void execute()
-      throws MojoExecutionException
-  {
+  public void execute() throws MojoExecutionException {
     validateParameters();
     doExecute();
   }

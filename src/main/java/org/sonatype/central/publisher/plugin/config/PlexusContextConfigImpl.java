@@ -16,7 +16,8 @@ import org.codehaus.plexus.context.ContextException;
 import org.codehaus.plexus.personality.plexus.lifecycle.phase.Contextualizable;
 
 @Component(role = PlexusContextConfig.class)
-public class PlexusContextConfigImpl implements PlexusContextConfig, Contextualizable
+public class PlexusContextConfigImpl
+    implements PlexusContextConfig, Contextualizable
 {
   @Override
   public void contextualize(final Context context) throws ContextException {
