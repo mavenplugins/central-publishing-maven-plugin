@@ -3,7 +3,9 @@
     Copyright (c) 2022-present Sonatype, Inc. All rights reserved.
     "Sonatype" is a trademark of Sonatype, Inc.
 
---><project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+-->
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+  xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
   <modelVersion>4.0.0</modelVersion>
 
   <groupId>io.github.mavenplugins</groupId>
@@ -39,13 +41,15 @@
     <groupId>org.sonatype.buildsupport</groupId>
     <artifactId>buildsupport</artifactId>
     <version>32</version>
-    <relativePath/>
+    <relativePath />
   </parent>
 
   <properties>
     <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
     <maven.compiler.source>8</maven.compiler.source>
     <maven.compiler.target>8</maven.compiler.target>
+    <maven.compiler.showDeprecation>false</maven.compiler.showDeprecation>
+    <maven.compiler.showWarnings>true</maven.compiler.showWarnings>
   </properties>
 
   <dependencies>
@@ -294,6 +298,37 @@
             <daemonThreadJoinTimeout>5000</daemonThreadJoinTimeout>
           </configuration>
         </plugin>
+        <plugin>
+          <!-- see developer-documentation/development/formatting.md -->
+          <groupId>com.diffplug.spotless</groupId>
+          <artifactId>spotless-maven-plugin</artifactId>
+          <version>2.46.1</version>
+          <configuration>
+            <!-- Note: On CI ratchetFrom requires 'git fetch origin master' to be performed at least once. -->
+            <!-- <ratchetFrom>origin/master</ratchetFrom> -->
+            <formats>
+              <format>
+                <includes>
+                  <include>*.java</include>
+                </includes>
+                <excludes>
+                  <exclude>target/generated-sources/**/*.java</exclude>
+                </excludes>
+                <trimTrailingWhitespace />
+                <endWithNewline />
+              </format>
+            </formats>
+            <java>
+              <removeUnusedImports />
+              <importOrder>
+                <file>${basedir}/sonatype/codestyle/sonatype-eclipse-imports.importorder</file>
+              </importOrder>
+              <eclipse>
+                <file>${basedir}/sonatype/codestyle/sonatype-eclipse.xml</file>
+              </eclipse>
+            </java>
+          </configuration>
+        </plugin>
       </plugins>
     </pluginManagement>
     <plugins>
@@ -328,6 +363,22 @@
             <goals>
               <goal>descriptor</goal>
               <goal>helpmojo</goal>
+            </goals>
+          </execution>
+        </executions>
+      </plugin>
+      <plugin>
+        <!-- The default behavior is to run the check goal. -->
+        <!-- Perform 'mvn spotless:apply' manually on demand. -->
+        <groupId>com.diffplug.spotless</groupId>
+        <artifactId>spotless-maven-plugin</artifactId>
+        <executions>
+          <execution>
+            <!-- Runs in compile phase to fail early in case of formatting issues. -->
+            <id>spotless-check</id>
+            <phase>compile</phase>
+            <goals>
+              <goal>check</goal>
             </goals>
           </execution>
         </executions>
@@ -516,6 +567,9 @@
         <public-snapshot.serverId>${organization.snapshotNexusRepoId}</public-snapshot.serverId>
         <public-snapshot.url>${organization.snapshotNexusURL}</public-snapshot.url>
 
+        <!-- Note: Override javadoc.doclint if required. This must be set for JAVADOC >= 8 only! -->
+        <javadoc.doclint />
+
         <!-- Plugin configuration properties -->
         <skip.attach-sources>false</skip.attach-sources>
         <!-- Note: Overwrite <phase.attach-javadocs> with none or empty value, if attached-javadocs must be skipped -->
@@ -528,7 +582,7 @@
         <toolchain.executionPhase>${toolchain.executionDisablePhase}</toolchain.executionPhase>
         <!-- Note: toolchain.jdkVersion is empty by default. It is supposed to be either set by profile 'toolchain'
                    below, by -D option via MAVEN_OPTS, on mvn commandline or by settings.xml -->
-        <toolchain.jdkVersion/>
+        <toolchain.jdkVersion />
         <!-- Sonatype staging -->
         <!-- staging.autoPublish: should be set to false for testing on release version deployments. -->
         <staging.autoPublish>true</staging.autoPublish>
@@ -563,7 +617,12 @@
         <staging.waitUntil>${staging.waitUntilPublishedState}</staging.waitUntil>
 
         <!-- Apache Maven Plugin versions -->
+        <version.maven-compiler-plugin>3.12.1</version.maven-compiler-plugin>
+        <version.maven-javadoc-plugin>3.6.0</version.maven-javadoc-plugin>
         <version.maven-toolchains-plugin>3.1.0</version.maven-toolchains-plugin>
+        <version.maven-plugin-report-plugin>4.0.0-beta-1</version.maven-plugin-report-plugin>
+        <version.maven-project-info-reports-plugin>3.9.0</version.maven-project-info-reports-plugin>
+        <version.maven-site-plugin>3.21.0</version.maven-site-plugin>
 
         <!-- Sonatype Maven Central Publishing Plugin GAVs -->
         <groupId.central-publishing-maven-plugin.released>io.github.mavenplugins</groupId.central-publishing-maven-plugin.released>
@@ -598,6 +657,42 @@
               <groupId>org.apache.maven.plugins</groupId>
               <artifactId>maven-toolchains-plugin</artifactId>
               <version>${version.maven-toolchains-plugin}</version>
+            </plugin>
+            <plugin>
+              <groupId>org.apache.maven.plugins</groupId>
+              <artifactId>maven-compiler-plugin</artifactId>
+              <version>${version.maven-compiler-plugin}</version>
+              <configuration>
+                <source>${maven.compiler.source}</source>
+                <target>${maven.compiler.target}</target>
+                <debug>true</debug>
+                <!-- <fork>true</fork> -->
+                <!-- <compilerArgument>${maven.compiler.compilerArgument}</compilerArgument> -->
+              </configuration>
+            </plugin>
+            <plugin>
+              <groupId>org.apache.maven.plugins</groupId>
+              <artifactId>maven-javadoc-plugin</artifactId>
+              <version>${version.maven-javadoc-plugin}</version>
+              <configuration>
+                <!-- Prevent javadoc lint warnings from failing builds -->
+                <doclint>${javadoc.doclint}</doclint>
+              </configuration>
+            </plugin>
+            <plugin>
+              <groupId>org.apache.maven.plugins</groupId>
+              <artifactId>maven-plugin-report-plugin</artifactId>
+              <version>${version.maven-plugin-report-plugin}</version>
+            </plugin>
+            <plugin>
+              <groupId>org.apache.maven.plugins</groupId>
+              <artifactId>maven-project-info-reports-plugin</artifactId>
+              <version>${version.maven-project-info-reports-plugin}</version>
+            </plugin>
+            <plugin>
+              <groupId>org.apache.maven.plugins</groupId>
+              <artifactId>maven-site-plugin</artifactId>
+              <version>${version.maven-site-plugin}</version>
             </plugin>
             <plugin>
               <groupId>${groupId.unleash-maven-plugin}</groupId>
@@ -680,11 +775,31 @@
           </plugin>
         </plugins>
       </build>
+      <reporting>
+        <plugins>
+          <plugin>
+            <groupId>org.apache.maven.plugins</groupId>
+            <artifactId>maven-plugin-report-plugin</artifactId>
+          </plugin>
+        </plugins>
+      </reporting>
     </profile>
 
     <!-- ====================================================== -->
     <!-- mavenplugins deploy and release profiles for GitHub CI -->
     <!-- ====================================================== -->
+    <!--
+    Turn off strict javadoc checks in Java-8+.
+    -->
+    <profile>
+      <id>mavenplugins-javadoc-java8</id>
+      <activation>
+        <jdk>[1.8,)</jdk>
+      </activation>
+      <properties>
+        <javadoc.doclint>none</javadoc.doclint>
+      </properties>
+    </profile>
     <profile>
       <id>mavenplugins-toolchain</id>
       <!-- Toolchain profile: Activated if SysEnv variable MAVEN_TOOLCHAIN_VERSION is defined. -->
