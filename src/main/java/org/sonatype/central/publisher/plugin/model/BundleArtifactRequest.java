@@ -25,8 +25,7 @@ public class BundleArtifactRequest
       final File stagingDirectory,
       final File outputDirectory,
       final String outputFilename,
-      final ChecksumRequest checksumRequest
-  )
+      final ChecksumRequest checksumRequest)
   {
     this.project = project;
     this.stagingDirectory = stagingDirectory;

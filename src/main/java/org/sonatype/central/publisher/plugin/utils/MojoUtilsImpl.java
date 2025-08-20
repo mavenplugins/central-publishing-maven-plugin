@@ -6,7 +6,6 @@ package org.sonatype.central.publisher.plugin.utils;
 
 import java.io.File;
 import java.nio.file.FileSystems;
-import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Objects;
@@ -101,7 +100,8 @@ public class MojoUtilsImpl
 
     return FileSystems
         .getDefault()
-        .getPath(mavenSession.getExecutionRootDirectory(), DEFAULT_BUILD_DIR_NAME, relativePath).toFile();
+        .getPath(mavenSession.getExecutionRootDirectory(), DEFAULT_BUILD_DIR_NAME, relativePath)
+        .toFile();
   }
 
   private MavenProject getFirstProjectWithThisPluginDefined(
@@ -110,9 +110,11 @@ public class MojoUtilsImpl
       final String pluginArtifactId,
       final String goal)
   {
-    return mavenSession.getProjects().stream()
+    return mavenSession.getProjects()
+        .stream()
         .filter(mavenProject -> findPlugin(mavenProject.getBuild(), pluginGroupId, pluginArtifactId, goal) != null)
-        .findFirst().orElse(null);
+        .findFirst()
+        .orElse(null);
   }
 
   private boolean isCurrentTheLastProjectInExecution(final MavenSession mavenSession) {
@@ -128,8 +130,8 @@ public class MojoUtilsImpl
       final String pluginArtifactId,
       final String goal)
   {
-    return mavenSession.getCurrentProject() ==
-        getLastProjectWithMojoInExecution(mavenSession, pluginGroupId, pluginArtifactId, goal);
+    return mavenSession.getCurrentProject() == getLastProjectWithMojoInExecution(mavenSession, pluginGroupId,
+        pluginArtifactId, goal);
   }
 
   private MavenProject getLastProjectWithMojoInExecution(
@@ -141,7 +143,8 @@ public class MojoUtilsImpl
     final ArrayList<MavenProject> projects = new ArrayList<>(mavenSession.getProjects());
     Collections.reverse(projects);
     return projects.stream()
-        .filter(project -> findPlugin(project.getBuild(), pluginGroupId, pluginArtifactId, goal) != null).findFirst()
+        .filter(project -> findPlugin(project.getBuild(), pluginGroupId, pluginArtifactId, goal) != null)
+        .findFirst()
         .orElse(null);
   }
 
@@ -152,8 +155,11 @@ public class MojoUtilsImpl
       final String goal)
   {
     if (container != null) {
-      return container.getPlugins().stream()
-          .filter(plugin -> pluginMatches(plugin, pluginGroupId, pluginArtifactId, goal)).findFirst().orElse(null);
+      return container.getPlugins()
+          .stream()
+          .filter(plugin -> pluginMatches(plugin, pluginGroupId, pluginArtifactId, goal))
+          .findFirst()
+          .orElse(null);
     }
     return null;
   }
@@ -166,7 +172,8 @@ public class MojoUtilsImpl
   {
     if (expectedPluginGroupId.equals(plugin.getGroupId()) && expectedPluginArtifactId.equals(plugin.getArtifactId())) {
       if (expectedPluginGoal != null) {
-        return plugin.getExecutions().stream()
+        return plugin.getExecutions()
+            .stream()
             .anyMatch(pluginExecution -> pluginExecution.getGoals().contains(expectedPluginGoal));
       }
       return true;

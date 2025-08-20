@@ -48,7 +48,8 @@ public class HashUtilsImpl
       }
     }
     catch (IOException e) {
-      getLogger().error("Failed to generate checksum file at " + file.getAbsolutePath() + " using algorithm " + algorithm, e);
+      getLogger()
+          .error("Failed to generate checksum file at " + file.getAbsolutePath() + " using algorithm " + algorithm, e);
     }
 
     return null;

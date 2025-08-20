@@ -39,8 +39,7 @@ public class ProjectUtilsImpl
 
   public List<ArtifactWithFile> getArtifacts(
       final MavenProject mavenProject,
-      final ArtifactFactory artifactFactory)
-      throws MojoExecutionException
+      final ArtifactFactory artifactFactory) throws MojoExecutionException
   {
     final List<ArtifactWithFile> artifactWithFiles = new ArrayList<>();
 
@@ -64,7 +63,11 @@ public class ProjectUtilsImpl
   }
 
   @Override
-  public void createChecksumFiles(final MavenProject project, final Path sourceDir, final ChecksumRequest checksumRequest) {
+  public void createChecksumFiles(
+      final MavenProject project,
+      final Path sourceDir,
+      final ChecksumRequest checksumRequest)
+  {
     Path path = getProjectGroupArtifactVersionPath(project);
     getLogger().info("Generate checksums for dir: " + path.toString());
     File gavDirectory = sourceDir.resolve(path).toFile();
@@ -147,8 +150,7 @@ public class ProjectUtilsImpl
 
   private List<ArtifactWithFile> getArtifactsFromNonPomProject(
       final MavenProject mavenProject,
-      final ArtifactFactory artifactFactory)
-      throws MojoExecutionException
+      final ArtifactFactory artifactFactory) throws MojoExecutionException
   {
     Artifact artifact = mavenProject.getArtifact();
     List<Artifact> attachedArtifacts = mavenProject.getAttachedArtifacts();
@@ -184,8 +186,10 @@ public class ProjectUtilsImpl
   }
 
   private List<ArtifactWithFile> getAttachedArtifacts(final MavenProject mavenProject) {
-    return mavenProject.getAttachedArtifacts().stream()
-        .map(artifact -> new ArtifactWithFile(artifact.getFile(), artifact)).collect(toList());
+    return mavenProject.getAttachedArtifacts()
+        .stream()
+        .map(artifact -> new ArtifactWithFile(artifact.getFile(), artifact))
+        .collect(toList());
   }
 
   private void deleteMavenMetadataCentralStagingXml(final MavenProject project, final Path sourceDir) {

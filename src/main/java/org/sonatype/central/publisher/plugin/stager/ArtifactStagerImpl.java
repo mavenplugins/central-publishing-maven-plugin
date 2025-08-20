@@ -41,8 +41,8 @@ public class ArtifactStagerImpl
   private ArtifactRepositoryLayout artifactRepositoryLayout;
 
   @Override
-  public void stageArtifact(final StageArtifactRequest stageArtifactRequest)
-      throws MojoExecutionException, ArtifactInstallationException
+  public void stageArtifact(
+      final StageArtifactRequest stageArtifactRequest) throws MojoExecutionException, ArtifactInstallationException
   {
     if (!stageArtifactRequest.getArtifactWithFiles().isEmpty()) {
       getLogger().info("Staging " + stageArtifactRequest.getArtifactWithFiles().size() + " files");
@@ -60,8 +60,10 @@ public class ArtifactStagerImpl
     }
   }
 
-  protected void install(final File source, final Artifact artifact, final ArtifactRepository stagingRepository)
-      throws ArtifactInstallationException
+  protected void install(
+      final File source,
+      final Artifact artifact,
+      final ArtifactRepository stagingRepository) throws ArtifactInstallationException
   {
     synchronized (parallelLock) {
       getLogger().info("Staging " + source.getAbsolutePath());

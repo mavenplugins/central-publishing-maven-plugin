@@ -34,7 +34,9 @@ public class ComponentPublishedEndpoint
   {
     try {
       String response = sendRequest(authProvider, baseUrl + PUBLISHED_ENDPOINT_URL, params, null, RequestType.GET);
-      Map<String, Boolean> result = objectMapper.readValue(response, new TypeReference<HashMap<String, Boolean>>() { });
+      Map<String, Boolean> result = objectMapper.readValue(response, new TypeReference<HashMap<String, Boolean>>()
+      {
+      });
       return result.get("published");
     }
     catch (HttpResponseException e) {

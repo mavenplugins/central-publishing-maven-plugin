@@ -8,6 +8,7 @@ package org.sonatype.central.publisher.plugin.utils;
 public class AuthData
 {
   private final String username;
+
   private final String password;
 
   public AuthData(final String username, final String password) {
