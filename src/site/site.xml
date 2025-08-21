@@ -22,7 +22,8 @@
         <menu name="Overview">
             <item name="Introduction" href="index.html"/>
             <item name="Goals" href="plugin-info.html"/>
-            <!-- <item name="Usage" href="usage.html"/> -->
+            <item name="Usage" href="usage.html"/>
+            <item name="Changelog" href="https://github.com/${project.artifactId}/releases"/>
         </menu>
         <menu ref="reports" inherit="top"/>
     </body>

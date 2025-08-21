@@ -1,0 +1,145 @@
+## Velocity treats double hashes as comments, which messes with markdown files. So $H can be used instead.
+#set( $H = '#' )
+
+Usage
+-----
+
+Add the plugin to your pom:
+
+```xml
+<build>
+  <plugins>
+    <plugin>
+      <groupId>${project.groupId}</groupId>
+      <artifactId>${project.artifactId}</artifactId>
+      <version>${project.version}</version>
+      <extensions>true</extensions>
+      <configuration>
+        <publishingServerId>central</publishingServerId>
+      </configuration>
+    </plugin>
+  </plugins>
+</build>
+```
+
+
+Credentials
+-----------
+
+It's required to configure your `settings.xml` with your user token credentials.
+You can get these credentials by [generating a user token](https://central.sonatype.org/publish/generate-portal-token/).
+
+```xml
+<settings>
+  <servers>
+    <server>
+      <id>central</id>
+      <username><!-- your token username --></username>
+      <password><!-- your token password --></password>
+    </server>
+  </servers>
+</settings>
+```
+
+
+Publishing
+----------
+
+Once your build is configured, running 
+
+    mvn deploy
+
+will generate a bundle and upload it to the Portal for validation.
+A successful publish will look similar to the following:
+
+```bash
+$ mvn deploy
+[INFO] Scanning for projects...
+[INFO] Inspecting build with total of 1 modules
+[INFO] Installing Central Publishing features
+...
+[INFO] --- central-publishing-maven-plugin:${project.version}:publish (injected-central-publishing) @ example ---
+[INFO] Using Central baseUrl: https://central.sonatype.com
+[INFO] Using credentials from server id central in settings.xml
+[INFO] Using Usertoken auth, with namecode: XXXXXXX
+[INFO] Staging 2 files
+[INFO] Staging /central/tests/sonatype-central-example/pom.xml
+[INFO] Installing /central/tests/sonatype-central-example/pom.xml to /central/tests/sonatype-central-example/target/central-staging/org/sonatype/central/test/example/1.0.0/example-1.0.0.pom
+[INFO] Staging /central/tests/sonatype-central-example/target/example-1.0.0.pom.asc
+[INFO] Installing /Users/sonatype/workspace/central/tests/sonatype-central-example/target/example-1.0.0.pom.asc to /Users/sonatype/workspace/central/tests/sonatype-central-example/target/central-staging/org/sonatype/central/test/example/1.0.0/example-1.0.0.pom.asc
+[INFO] Pre Bundling - deleted /central/tests/sonatype-central-example/target/central-staging/org/sonatype/central/test/example/maven-metadata-central-staging.xml
+[INFO] Generate checksums for dir: org/sonatype/central/test/example/1.0.0
+[INFO] Going to create /central/tests/sonatype-central-example/target/central-publishing/central-bundle.zip by bundling content at /central/tests/sonatype-central-example/target/central-staging
+[INFO] Created bundle successfully /central/tests/sonatype-central-example/target/central-staging/central-bundle.zip
+[INFO] Going to upload /central/tests/sonatype-central-example/target/central-publishing/central-bundle.zip
+[INFO] Uploaded bundle successfully, deployment name: Deployment, deploymentId: 9590fb21-a026-4451-9722-a7216b258f4d. Deployment will require manual publishing
+[INFO] Waiting until Deployment 9590fb21-a026-4451-9722-a7216b258f4d is validated
+[INFO] Deployment 9590fb21-a026-4451-9722-a7216b258f4d has been validated. To finish publishing visit https://central.sonatype.com/publishing/deployments
+[INFO] ------------------------------------------------------------------------
+[INFO] BUILD SUCCESS
+[INFO] ------------------------------------------------------------------------
+[INFO] Total time:  15.000 s
+[INFO] Finished at: 2024-01-01T00:00:00-00:00
+[INFO] ------------------------------------------------------------------------
+```
+
+
+Automatic Publishing︎
+--------------------
+
+In the minimal configuration as used above, manual publishing is required.
+This can be useful when testing how publishing works or if you wish to perform additional manual checks.
+Often, especially in CI builds, it's desired to automatically publish after upload and validation.
+This can be achieved by setting the `autoPublish` configuration value to `true`.
+
+```xml
+<build>
+  <plugins>
+    <plugin>
+      <groupId>${project.groupId}</groupId>
+      <artifactId>${project.artifactId}</artifactId>
+      <version>${project.version}</version>
+      <extensions>true</extensions>
+      <configuration>
+         <publishingServerId>central</publishingServerId>
+         <autoPublish>true</autoPublish>
+      </configuration>
+    </plugin>
+  <plugins>
+</build>
+```
+
+
+Wait for Publishing︎
+-------------------
+
+By default the plugin will block and wait until after it has uploaded a bundle
+and the publishing server has acknowledged that the bundle was validated.
+If it's desired to block and wait until after publishing has occurred
+the `waitUntil` configuration needs to be set to `published`.
+This requires Automatic Publishing.
+
+```xml
+<build>
+  <plugins>
+    <plugin>
+      <groupId>${project.groupId}</groupId>
+      <artifactId>${project.artifactId}</artifactId>
+      <version>${project.version}</version>
+      <extensions>true</extensions>
+      <configuration>
+         <publishingServerId>central</publishingServerId>
+         <autoPublish>true</autoPublish>
+         <waitUntil>published</waitUntil>
+      </configuration>
+    </plugin>
+  <plugins>
+</build>
+```
+
+
+Plugin configuration options
+----------------------------
+
+See [publish parameters](publish-mojo.html).
+
