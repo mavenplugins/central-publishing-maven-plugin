@@ -1,0 +1,206 @@
+# Build Maven site and publish to GitHub Pages
+name: Publish Maven Site to Pages
+
+on:
+  # Allows you to run this workflow manually from the Actions tab
+  workflow_dispatch:
+  # Runs on pushes targeting the default branch
+  push:
+    branches: ["gh-pages"]
+
+# Sets permissions of the GITHUB_TOKEN to allow deployment to GitHub Pages
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+  deployments: write
+
+# Allow only one concurrent deployment, skipping runs queued between the run in-progress and latest queued.
+# However, do NOT cancel in-progress runs as we want to allow these production deployments to complete.
+concurrency:
+  group: "pages"
+  cancel-in-progress: false
+
+jobs:
+  # Job: Build
+  build:
+    name: Build Site
+    runs-on: ubuntu-latest
+    # Map a step output to a job output
+    outputs:
+      artifact_name: ${{ steps.set_env.outputs.artifact_name }}
+    steps:
+      - name: Set Environment Vars
+        id: set_env
+        run: |
+          ARTIFACT_NAME='github-pages-deployment'
+          JAVA_VERSION_ENFORCED='17'
+          MAVEN_VERSION_ENFORCED='3.9.6'
+          # Maven >= 3.6.1 has option -ntp, use empty string otherwise
+          MVN_NTP_OPTION='-ntp'
+          #MVN_NTP_OPTION=""
+          # Maven < 3.6.3 requires to define help plugin version to 3.3.0
+          #MVN_HELP_VERSION_OPTION="-Dversion.maven-help-plugin=3.3.0"
+          echo "ARTIFACT_NAME=${ARTIFACT_NAME}" >> $GITHUB_ENV
+          echo "artifact_name=${ARTIFACT_NAME}" >> "$GITHUB_OUTPUT"
+          echo "JAVA_VERSION_ENFORCED=${JAVA_VERSION_ENFORCED}" >> $GITHUB_ENV
+          echo "java_version_enforced=${JAVA_VERSION_ENFORCED}" >> "$GITHUB_OUTPUT"
+          echo "MAVEN_VERSION_ENFORCED=${MAVEN_VERSION_ENFORCED}" >> $GITHUB_ENV
+          echo "maven_version_enforced=${MAVEN_VERSION_ENFORCED}" >> "$GITHUB_OUTPUT"
+          echo "MVN_NTP_OPTION=${MVN_NTP_OPTION}" >> $GITHUB_ENV
+          echo "MVN_HELP_VERSION_OPTION=${MVN_HELP_VERSION_OPTION}" >> $GITHUB_ENV
+          echo "Env:" && cat $GITHUB_ENV
+          echo "Outputs:" && cat $GITHUB_OUTPUT
+
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      # Setup JAVA home with Maven settings for publishing to Maven Central
+      - name: Setup JAVA home with Maven settings.xml
+        id: setup-java-home
+        uses: GHCICD/setup-java@vHEAD-GHCICD-552
+        with:
+          java-version: ${{ steps.set_env.outputs.java_version_enforced }}
+          distribution: zulu
+          # We prefer to get an empty local repo for any build
+          #cache: maven
+
+      - name: Determine default installed Maven version
+        id: default-maven
+        run: |
+          DEFAULT_MAVEN_VERSION="$(mvn -q -v)"
+          echo "maven-version=${DEFAULT_MAVEN_VERSION}" >> $GITHUB_OUTPUT
+          echo "Default installed Maven version: ${DEFAULT_MAVEN_VERSION}"
+          echo "Outputs:" && cat $GITHUB_OUTPUT
+
+      - name: Update Maven version if required
+        uses: mavenplugins/actions-setup-maven@vHEAD
+        if: steps.set_env.outputs.maven_version_enforced != steps.default-maven.outputs.maven-version
+        with:
+          maven-version: '${{ steps.set_env.outputs.maven_version_enforced }}'
+
+      - name: Show initial Maven setup result
+        run: |
+          echo "PATH:      ${PATH}"
+          echo "JAVA_HOME: ${JAVA_HOME}"
+          mvn --version
+          echo "MAVEN_OPTS: ${MAVEN_OPTS}"
+          echo "##### BEGIN - settings.xml"
+          cat ~/.m2/settings.xml
+          echo "##### END - settings.xml"
+          echo "##### BEGIN - toolchains.xml"
+          cat ~/.m2/toolchains.xml
+          echo "##### END - toolchains.xml"
+
+      - name: Set environment for project, compile and toolchain version
+        run: |
+          MAVEN_PROJECT_VERSION=$(mvn -q -Dexpression=project.version -DforceStdout ${{ env.MVN_HELP_VERSION_OPTION }} help:evaluate)
+          if [[ "${MAVEN_PROJECT_VERSION}" == *-SNAPSHOT ]]; then
+            IS_SNAPSHOT_VERSION=true
+          else
+            IS_SNAPSHOT_VERSION=false
+          fi
+          MAVEN_COMPILER_TARGET=$(mvn -q -Dexpression=maven.compiler.target -DforceStdout ${{ env.MVN_HELP_VERSION_OPTION }} help:evaluate)
+          MAVEN_TOOLCHAIN_VERSION="${MAVEN_COMPILER_TARGET:-${{ env.JAVA_VERSION_ENFORCED }}}"
+          # Strip off probable leading 1.
+          MAVEN_TOOLCHAIN_VERSION="${MAVEN_TOOLCHAIN_VERSION#1.*}"
+          CENTRAL_PUBLISHING_MAVEN_PLUGIN_RELEASED_VERSION=$(mvn -q -Dexpression=version.central-publishing-maven-plugin.released -DforceStdout ${{ env.MVN_HELP_VERSION_OPTION }} help:evaluate)
+          echo "  MAVEN_PROJECT_VERSION:       ${MAVEN_PROJECT_VERSION}"
+          echo "  IS_SNAPSHOT_VERSION:         ${IS_SNAPSHOT_VERSION}"
+          echo "  MAVEN_COMPILER_TARGET:       ${MAVEN_COMPILER_TARGET}"
+          echo "  MAVEN_TOOLCHAIN_VERSION:     ${MAVEN_TOOLCHAIN_VERSION}"
+          echo "  CENTRAL_PUBLISHING_MAVEN_PLUGIN_RELEASED_VERSION: ${CENTRAL_PUBLISHING_MAVEN_PLUGIN_RELEASED_VERSION}"
+          echo "MAVEN_PROJECT_VERSION=${MAVEN_PROJECT_VERSION}" >> $GITHUB_ENV
+          echo "IS_SNAPSHOT_VERSION=${IS_SNAPSHOT_VERSION}" >> $GITHUB_ENV
+          echo "MAVEN_COMPILER_TARGET=${MAVEN_COMPILER_TARGET}" >> $GITHUB_ENV
+          echo "MAVEN_TOOLCHAIN_VERSION=${MAVEN_TOOLCHAIN_VERSION}" >> $GITHUB_ENV
+          echo "CENTRAL_PUBLISHING_MAVEN_PLUGIN_RELEASED_VERSION=${CENTRAL_PUBLISHING_MAVEN_PLUGIN_RELEASED_VERSION}" >> $GITHUB_ENV
+          echo "Env:" && cat $GITHUB_ENV
+
+      - name: Add JAVA version for toolchain if required
+        id: add-java-for-toolchain
+        uses: GHCICD/setup-java@vHEAD-GHCICD-552
+        if: env.MAVEN_TOOLCHAIN_VERSION != env.JAVA_VERSION_ENFORCED
+        with:
+          java-version: ${{ env.MAVEN_TOOLCHAIN_VERSION }}
+          distribution: zulu
+          update-toolchains-only: true
+
+      - name: Show Maven version, settings.xml and toolchains.xml
+        id: show-maven-version
+        run: |
+          echo "PATH:      ${PATH}"
+          echo "JAVA_HOME: ${JAVA_HOME}"
+          mvn --version
+          echo "MAVEN_OPTS: ${MAVEN_OPTS}"
+          echo "##### BEGIN - settings.xml"
+          cat ~/.m2/settings.xml
+          echo "##### END - settings.xml"
+          echo "##### BEGIN - toolchains.xml"
+          cat ~/.m2/toolchains.xml
+          echo "##### END - toolchains.xml"
+          # Set step outputs:
+          echo "MAVEN_VERSION=${{ env.MAVEN_VERSION_ENFORCED }}" >> $GITHUB_OUTPUT
+          echo "MAVEN_VERSION=${{ env.MAVEN_VERSION_ENFORCED }}" >> $GITHUB_ENV
+          echo "Env:" && cat $GITHUB_ENV
+          echo "Outputs:" && cat $GITHUB_OUTPUT
+
+      - name: Build Maven Site
+        run: |
+          # -ntp Do not display transfer progress when downloading or uploading
+          # -B   Run in non-interactive (batch) mode (disables output color)
+          # -U   Forces a check for missing releases and updated snapshots on
+          mvn ${{ env.MVN_NTP_OPTION }} -B -U \
+              clean site -Dversion.central-publishing-maven-plugin.forStaging=${{ env.CENTRAL_PUBLISHING_MAVEN_PLUGIN_RELEASED_VERSION }}
+        env:
+          OSSRH_USERNAME: ${{ secrets.OSSRH_USERNAME }}
+          OSSRH_PASSWORD: ${{ secrets.OSSRH_PASSWORD }}
+          OSSRH_GPG_PASSPHRASE: ${{ secrets.OSSRH_GPG_PASSPHRASE }}
+          IS_SNAPSHOT_VERSION: ${{ env.IS_SNAPSHOT_VERSION }}
+          # We do not want to release to Maven Central via this action!
+          # Releases shall be performed via unleash plugin only.
+          DO_NOT_RELEASE_SONATYPE_STAGING: 'true'
+          TEST_REPO_KEY_PASSPHRASE: ${{ secrets.TEST_REPO_KEY_PASSPHRASE }}
+
+      - name: Setup Pages
+        uses: actions/configure-pages@v5
+      - name: Upload site artifact
+        uses: actions/upload-pages-artifact@v3
+        with:
+          # Upload Maven site content created
+          path: 'target/site/'
+          # Name of the artifact uploaded
+          name: ${{ env.ARTIFACT_NAME }}
+
+
+  # Job: Cleanup former Pages deployments
+  cleanup_deployment_history:
+    needs: build
+    name: Cleanup Deployment History
+    runs-on: ubuntu-latest
+    # Daisychain output(s) from former Job(s)
+    outputs:
+      artifact_name: ${{ needs.build.outputs.artifact_name }}
+    steps:
+      - name: Delete Previous Deployments
+        #uses: strumwolf/delete-deployment-environment@v3
+        uses: GHCICD/delete-deployment-environment@v3
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+          environment: github-pages
+          onlyRemoveDeployments: true
+
+  # Job: Deployment
+  deploy:
+    needs: cleanup_deployment_history
+    name: Publish Site to Pages
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    runs-on: ubuntu-latest
+    steps:
+      - name: Deploy to GitHub Pages
+        id: deployment
+        uses: actions/deploy-pages@v4
+        with:
+          artifact_name: ${{ needs.cleanup_deployment_history.outputs.artifact_name }}
