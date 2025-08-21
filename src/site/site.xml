@@ -11,7 +11,7 @@
             <topBarEnabled>true</topBarEnabled>
             <sideBarEnabled>true</sideBarEnabled>
             <gitHub>
-                <projectId>mavenplugins/central-publishing-maven-plugin</projectId>
+                <projectId>mavenplugins/${project.artifactId}</projectId>
                 <ribbonOrientation>right</ribbonOrientation>
                 <ribbonColor>gray</ribbonColor>
             </gitHub>
@@ -23,7 +23,7 @@
             <item name="Introduction" href="index.html"/>
             <item name="Goals" href="plugin-info.html"/>
             <item name="Usage" href="usage.html"/>
-            <item name="Changelog" href="https://github.com/${project.artifactId}/releases"/>
+            <item name="Changelog" href="https://github.com/mavenplugins/${project.artifactId}/releases"/>
         </menu>
         <menu ref="reports" inherit="top"/>
     </body>
