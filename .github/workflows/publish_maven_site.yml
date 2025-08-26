@@ -53,7 +53,7 @@ jobs:
           echo "Outputs:" && cat $GITHUB_OUTPUT
 
       - name: Checkout
-        uses: actions/checkout@v4
+        uses: actions/checkout@v5
 
       # Setup JAVA home with Maven settings for publishing to Maven Central
       - name: Setup JAVA home with Maven settings.xml
