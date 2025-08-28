@@ -18,6 +18,7 @@ import org.sonatype.central.publisher.client.model.PublishingType;
 import org.sonatype.central.publisher.plugin.bundler.ArtifactBundler;
 import org.sonatype.central.publisher.plugin.config.PlexusContextConfig;
 import org.sonatype.central.publisher.plugin.deffer.ArtifactDeferrer;
+import org.sonatype.central.publisher.plugin.deffer.ArtifactDeferrerImpl;
 import org.sonatype.central.publisher.plugin.model.ArtifactWithFile;
 import org.sonatype.central.publisher.plugin.model.BundleArtifactRequest;
 import org.sonatype.central.publisher.plugin.model.ChecksumRequest;
@@ -35,6 +36,7 @@ import org.sonatype.central.publisher.plugin.watcher.DeploymentPublishedWatcher;
 import org.apache.commons.io.FileUtils;
 import org.apache.maven.artifact.deployer.ArtifactDeploymentException;
 import org.apache.maven.artifact.installer.ArtifactInstallationException;
+import org.apache.maven.execution.MavenSession;
 import org.apache.maven.plugin.MojoExecutionException;
 import org.apache.maven.plugins.annotations.Component;
 import org.apache.maven.plugins.annotations.LifecyclePhase;
@@ -50,28 +52,76 @@ import static java.util.Collections.unmodifiableList;
 import static java.util.stream.Collectors.toList;
 import static org.sonatype.central.publisher.client.PublisherConstants.DEFAULT_ORGANIZATION_ID;
 import static org.sonatype.central.publisher.client.httpclient.auth.AuthProviderType.USERTOKEN;
-import static org.sonatype.central.publisher.plugin.Constants.*;
+import static org.sonatype.central.publisher.plugin.Constants.AUTO_PUBLISH_DEFAULT_VALUE;
+import static org.sonatype.central.publisher.plugin.Constants.AUTO_PUBLISH_NAME;
+import static org.sonatype.central.publisher.plugin.Constants.CENTRAL_BASE_URL_DEFAULT_VALUE;
+import static org.sonatype.central.publisher.plugin.Constants.CENTRAL_BASE_URL_NAME;
+import static org.sonatype.central.publisher.plugin.Constants.CENTRAL_SNAPSHOTS_URL_NAME;
+import static org.sonatype.central.publisher.plugin.Constants.CHECKSUMS_DEFAULT_VALUE;
+import static org.sonatype.central.publisher.plugin.Constants.CHECKSUMS_NAME;
+import static org.sonatype.central.publisher.plugin.Constants.DEFAULT_BUNDLE_OUTPUT_DIR_NAME;
+import static org.sonatype.central.publisher.plugin.Constants.DEFAULT_BUNDLE_OUTPUT_FILENAME;
+import static org.sonatype.central.publisher.plugin.Constants.DEFAULT_DEFERRED_DIR_NAME;
+import static org.sonatype.central.publisher.plugin.Constants.DEFAULT_DEPLOYMENT_NAME;
+import static org.sonatype.central.publisher.plugin.Constants.DEFAULT_STAGING_DIR_NAME;
+import static org.sonatype.central.publisher.plugin.Constants.EXCLUDE_ARTIFACTS_NAME;
+import static org.sonatype.central.publisher.plugin.Constants.IGNORE_PUBLISHED_COMPONENTS_DEFAULT_VALUE;
+import static org.sonatype.central.publisher.plugin.Constants.IGNORE_PUBLISHED_COMPONENTS_NAME;
+import static org.sonatype.central.publisher.plugin.Constants.PUBLISHING_SERVER_ID_DEFAULT_VALUE;
+import static org.sonatype.central.publisher.plugin.Constants.PUBLISHING_SERVER_ID_NAME;
+import static org.sonatype.central.publisher.plugin.Constants.PUBLISH_COMPLETION_POLL_INTERVAL_DEFAULT_VALUE;
+import static org.sonatype.central.publisher.plugin.Constants.PUBLISH_COMPLETION_POLL_INTERVAL_NAME;
+import static org.sonatype.central.publisher.plugin.Constants.WAIT_FOR_PUBLISH_COMPLETION_DEFAULT_VALUE;
+import static org.sonatype.central.publisher.plugin.Constants.WAIT_FOR_PUBLISH_COMPLETION_NAME;
+import static org.sonatype.central.publisher.plugin.Constants.WAIT_MAX_TIME_DEFAULT_VALUE;
+import static org.sonatype.central.publisher.plugin.Constants.WAIT_MAX_TIME_NAME;
+import static org.sonatype.central.publisher.plugin.Constants.WAIT_POLLING_INTERVAL_DEFAULT_VALUE;
+import static org.sonatype.central.publisher.plugin.Constants.WAIT_POLLING_INTERVAL_NAME;
+import static org.sonatype.central.publisher.plugin.Constants.WAIT_UNTIL_DEFAULT_VALUE;
+import static org.sonatype.central.publisher.plugin.Constants.WAIT_UNTIL_NAME;
 import static org.sonatype.central.publisher.plugin.deffer.ArtifactDeferrerImpl.INDEX_FILE_NAME;
 
 @Mojo(name = "publish", defaultPhase = LifecyclePhase.DEPLOY, requiresOnline = true, threadSafe = true)
 public class PublishMojo
     extends AbstractPublisherMojo
 {
+  /**
+   * Name of the bundle file that the plugin will output as a result.
+   */
   @Parameter(property = "outputFilename", defaultValue = DEFAULT_BUNDLE_OUTPUT_FILENAME, required = true)
   private String outputFilename;
 
+  /**
+   * Name of the directory that the plugin will output the bundle file into.<br>
+   * <b>Note:</b> this directory will be cleaned on the first execution of this plugin.
+   */
   @Parameter(property = "outputDirectory")
   private File forcedOutputDirectory;
 
+  /**
+   * Name of the directory where the plugin will stage files.<br>
+   * <b>Note:</b> this directory will be cleaned on the first execution of this plugin.
+   */
   @Parameter(property = "stagingDirectory")
   private File forcedStagingDirectory;
 
+  /**
+   * Name of the directory where the plugin will defer snapshot files.<br>
+   * <b>Note:</b> this directory will be cleaned on the first execution of this plugin.
+   */
   @Parameter(property = "deferredDirectory")
   private File forcedDeferredDirectory;
 
+  /**
+   * Name of the deployment that's used for uploading and deploying on the central url. If using
+   * <code>central.sonatype.com</code>, this is the name that will be visible on the Deployments page.
+   */
   @Parameter(property = "deploymentName", defaultValue = DEFAULT_DEPLOYMENT_NAME)
   private String deploymentName;
 
+  /**
+   * ID of the server that you configured in your <code>settings.xml</code>.
+   */
   @Parameter(property = PUBLISHING_SERVER_ID_NAME, defaultValue = PUBLISHING_SERVER_ID_DEFAULT_VALUE)
   private String publishingServerId;
 
@@ -84,7 +134,15 @@ public class PublishMojo
 
   /**
    * Assign what to wait for, if desired to wait, of the processing of a deployment. See @{@link WaitUntilRequest} for
-   * options. Defaults to {@link Constants#WAIT_MAX_TIME_DEFAULT_VALUE}.
+   * options.
+   * <p/>
+   * <code>uploaded</code> - Wait until the bundle is being uploaded.
+   * <p/>
+   * <code>validated</code> - Wait until the uploaded bundle is validated.
+   * <p/>
+   * <code>published</code> - Wait until the uploaded bundle is published to Maven Central.
+   * <p/>
+   * Defaults to {@link Constants#WAIT_UNTIL_DEFAULT_VALUE}.
    */
   @Parameter(
       property = WAIT_UNTIL_NAME,
@@ -133,8 +191,14 @@ public class PublishMojo
   private String centralBaseUrl;
 
   /**
-   * Assign the URL that this plugin uses to publish snapshots. Defaults to
-   * {@link Constants#CENTRAL_SNAPSHOTS_URL_DEFAULT_VALUE}.
+   * URL that this plugin uses to publish snapshots to. Used by
+   * {@link ArtifactDeferrerImpl#getDeploymentRepository(MavenSession, String, String)} as follows:
+   * <p/>
+   * a) Use this URL if it is set and {@link #publishingServerId} is set.
+   * <p/>
+   * b) Use repo URL defined by distributionManagement from project POM if this is defined.
+   * <p/>
+   * c) Use {@link Constants#CENTRAL_SNAPSHOTS_URL_DEFAULT_VALUE} as default if {@link #publishingServerId} is set.
    */
   @Parameter(property = CENTRAL_SNAPSHOTS_URL_NAME)
   private String centralSnapshotsUrl;
@@ -142,11 +206,11 @@ public class PublishMojo
   /**
    * Assign what type of checksums will be generated for files. Three options are available:
    * <p/>
-   * all - Will request MD5, SHA1, SHA256 and SHA512 to be generated.
+   * <code>all</code> - Will request MD5, SHA1, SHA256 and SHA512 to be generated.
    * <p/>
-   * required - Only MD5 and SHA1 will be requested to be generated.
+   * <code>required</code> - Only MD5 and SHA1 will be requested to be generated.
    * <p/>
-   * none - No Checksums will be requested to be generated.
+   * <code>none</code> - No Checksums will be requested to be generated.
    * <p/>
    */
   @Parameter(property = CHECKSUMS_NAME, defaultValue = CHECKSUMS_DEFAULT_VALUE)
@@ -217,7 +281,7 @@ public class PublishMojo
       // only update waitPollingInterval if it was still set to the default
       if (waitPollingInterval == waitPollingIntervalDefault) {
         // convert to seconds from milliseconds
-        waitPollingInterval = (publishCompletionPollInterval / 1000);
+        waitPollingInterval = publishCompletionPollInterval / 1000;
       }
     }
 
@@ -396,7 +460,8 @@ public class PublishMojo
 
     try {
       artifactStager.stageArtifact(new StageArtifactRequest(filteredArtifactWithFiles, stagingDirectory));
-      artifactBundler.preBundle(getMavenSession().getCurrentProject(), stagingDirectory.toPath(), checksumRequest);
+      artifactBundler.preBundle(getMavenSession().getCurrentProject(), stagingDirectory.toPath(),
+          checksumRequest);
     }
     catch (final ArtifactInstallationException e) {
       throw new MojoExecutionException(e.getMessage(), e);
@@ -527,7 +592,8 @@ public class PublishMojo
           settingsDecryptionResult.getServer().getPassword());
     }
     catch (Exception e) {
-      throw new RuntimeException("Unable to get publisher server properties for server id: " + publishingServerId, e);
+      throw new RuntimeException("Unable to get publisher server properties for server id: " + publishingServerId,
+          e);
     }
   }
 
