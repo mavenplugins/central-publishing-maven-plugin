@@ -18,9 +18,16 @@ import org.apache.maven.plugins.annotations.Parameter;
 public abstract class AbstractPublisherMojo
     extends AbstractMojo
 {
+  /**
+   * For creating only the bundle but skipping uploading and publishing. This is useful for creating a bundle and
+   * manually uploading it through <code>central.sonatype.com</code>.
+   */
   @Parameter(property = "skipPublishing", defaultValue = "false", required = true)
   private boolean skipPublishing;
 
+  /**
+   * Indicates if building is allowed to have the plugin fail before uploading and publishing occurs.
+   */
   @Parameter(property = "failOnBuildFailure", defaultValue = "true")
   private boolean failOnBuildFailure;
 
