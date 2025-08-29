@@ -34,6 +34,7 @@ import org.sonatype.central.publisher.plugin.utils.AuthData;
 import org.sonatype.central.publisher.plugin.watcher.DeploymentPublishedWatcher;
 
 import org.apache.commons.io.FileUtils;
+import org.apache.commons.lang3.StringUtils;
 import org.apache.maven.artifact.deployer.ArtifactDeploymentException;
 import org.apache.maven.artifact.installer.ArtifactInstallationException;
 import org.apache.maven.execution.MavenSession;
@@ -276,7 +277,7 @@ public class PublishMojo
       getLog().warn(format(
           "%s is deprecated, using it will set %s (converted to seconds).",
           PUBLISH_COMPLETION_POLL_INTERVAL_NAME,
-          WAIT_MAX_TIME_NAME));
+          WAIT_POLLING_INTERVAL_NAME));
 
       // only update waitPollingInterval if it was still set to the default
       if (waitPollingInterval == waitPollingIntervalDefault) {
@@ -287,7 +288,7 @@ public class PublishMojo
 
     if (waitPollingInterval < waitPollingIntervalDefault) {
       getLog().warn(format(
-          "%s was set to be less then %2$s seconds, will use the default of %2$s seconds.",
+          "%s was set to be less than %2$s seconds, will use the default of %2$s seconds.",
           WAIT_POLLING_INTERVAL_NAME,
           WAIT_POLLING_INTERVAL_DEFAULT_VALUE));
 
@@ -295,10 +296,9 @@ public class PublishMojo
     }
 
     int waitMaxTimeDefault = Integer.parseInt(WAIT_MAX_TIME_DEFAULT_VALUE);
-
-    if (waitMaxTime < Integer.parseInt(WAIT_MAX_TIME_DEFAULT_VALUE)) {
+    if (waitMaxTime < waitMaxTimeDefault) {
       getLog().warn(format(
-          "%s was set to be less then %2$s seconds, will use the default of %2$s seconds.",
+          "%s was set to be less than %2$s seconds, will use the default of %2$s seconds.",
           WAIT_MAX_TIME_NAME,
           WAIT_MAX_TIME_DEFAULT_VALUE));
 
@@ -409,7 +409,7 @@ public class PublishMojo
         artifactDeferrer.deployUp(getMavenSession(), deferredDirectory, null);
       }
       else {
-        getLog().debug("Skipping Central SNAPSHOT Publishing as no index with deferred artifacts were found.");
+        getLog().debug("Skipping Central SNAPSHOT Publishing as no index with deferred artifacts was found.");
       }
     }
     catch (ArtifactDeploymentException | IOException e) {
@@ -584,12 +584,21 @@ public class PublishMojo
   private AuthData getUserCredentials() {
     try {
       Server server = getMavenSession().getSettings().getServer(publishingServerId);
-
+      if (server == null) {
+        throw new IllegalStateException("No <server> with id '" + publishingServerId + "' found in settings.xml");
+      }
       SettingsDecryptionResult settingsDecryptionResult =
           theCryptKeeper.decrypt(new DefaultSettingsDecryptionRequest(server));
-
-      return new AuthData(settingsDecryptionResult.getServer().getUsername(),
-          settingsDecryptionResult.getServer().getPassword());
+      Server decrypted = settingsDecryptionResult.getServer();
+      if (decrypted == null
+          || StringUtils.isBlank(decrypted.getUsername())
+          || StringUtils.isBlank(decrypted.getPassword())) {
+        if (!settingsDecryptionResult.getProblems().isEmpty()) {
+          getLog().warn("Settings decryption problems: " + settingsDecryptionResult.getProblems());
+        }
+        throw new IllegalStateException("Missing username/password for server id '" + publishingServerId + "'");
+      }
+      return new AuthData(decrypted.getUsername(), decrypted.getPassword());
     }
     catch (Exception e) {
       throw new RuntimeException("Unable to get publisher server properties for server id: " + publishingServerId,
