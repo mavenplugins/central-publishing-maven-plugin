@@ -155,7 +155,7 @@ public class ArtifactDeferrerImpl
         ofNullable(getLogger()).ifPresent(logger -> logger.debug(
             format("Installing artifact %s into staging repository\n%s", artifact, stagingRepository)));
 
-        this.artifactInstaller.install(source, artifact, stagingRepository);
+        artifactInstaller.install(source, artifact, stagingRepository);
 
         String pluginPrefix = null;
         for (ArtifactMetadata artifactMetadata : artifact.getMetadataList()) {
@@ -267,13 +267,26 @@ public class ArtifactDeferrerImpl
         maybeAddMavenPluginMetaData(artifact, groupId, pluginPrefix, artifactId);
       }
 
-      ofNullable(getLogger()).ifPresent(logger -> logger.debug(
-          format("Deploying: %s:%s:%s:%s:%s:%s - file %s:%s: to server id: %s: url: %s",
-              groupId, artifactId, version, classifier, packaging,
-              extension, pomFileName, pluginPrefix, repoId, repoUrl)));
+      ofNullable(getLogger()).ifPresent(logger -> logger.info(
+          format("Deploying: %s:%s:%s:%s%s [%s]%s to server id: %s: url: %s",
+              groupId, artifactId, version, classifier != null ? format("%s:", classifier) : "",
+              extension, packaging, toPomFileMessage(pomFileName, pluginPrefix), repoId, repoUrl)));
 
-      this.artifactDeployer.deploy(includedFile, artifact, repoToUse, mavenSession.getLocalRepository());
+      artifactDeployer.deploy(includedFile, artifact, repoToUse, mavenSession.getLocalRepository());
     }
+  }
+
+  private String toPomFileMessage(final String pomFileName, final String pluginPrefix) {
+    String ret = "";
+
+    if (pomFileName != null) {
+      ret += format(" - file %s:", pomFileName);
+      if (pluginPrefix != null) {
+        ret += format("%s:", pluginPrefix);
+      }
+    }
+
+    return ret;
   }
 
   @SuppressWarnings("deprecation")
@@ -355,7 +368,7 @@ public class ArtifactDeferrerImpl
 
   @SuppressWarnings("deprecation")
   protected ArtifactRepository createDeploymentArtifactRepository(final String id, final String url) {
-    return this.artifactRepositoryFactory.createDeploymentArtifactRepository(id, url, this.artifactRepositoryLayout,
+    return artifactRepositoryFactory.createDeploymentArtifactRepository(id, url, artifactRepositoryLayout,
         true);
   }
 
@@ -410,7 +423,7 @@ public class ArtifactDeferrerImpl
 
     @Override
     public String getExtension() {
-      return this.extension;
+      return extension;
     }
   }
 }
