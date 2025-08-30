@@ -8,6 +8,7 @@ import java.nio.file.Path;
 import java.util.Map;
 
 import org.sonatype.central.publisher.client.httpclient.ComponentPublishedEndpoint;
+import org.sonatype.central.publisher.client.httpclient.DeletePublisherEndpoint;
 import org.sonatype.central.publisher.client.httpclient.StatusPublisherEndpoint;
 import org.sonatype.central.publisher.client.httpclient.UploadPublisherEndpoint;
 import org.sonatype.central.publisher.client.httpclient.auth.AuthProvider;
@@ -39,17 +40,21 @@ class PublisherClientImpl
 
   private final ComponentPublishedEndpoint componentPublishedEndpoint;
 
+  private final DeletePublisherEndpoint deletePublisherEndpoint;
+
   private final AuthProviderFactory authProviderFactory;
 
   public PublisherClientImpl(
       final UploadPublisherEndpoint uploadPublisherEndpoint,
       final StatusPublisherEndpoint statusPublisherEndpoint,
       final ComponentPublishedEndpoint componentPublishedEndpoint,
+      final DeletePublisherEndpoint deletePublisherEndpoint,
       final AuthProviderFactory authProviderFactory)
   {
     this.uploadPublisherEndpoint = uploadPublisherEndpoint;
     this.statusPublisherEndpoint = statusPublisherEndpoint;
     this.componentPublishedEndpoint = componentPublishedEndpoint;
+    this.deletePublisherEndpoint = deletePublisherEndpoint;
     this.authProviderFactory = authProviderFactory;
   }
 
@@ -84,6 +89,12 @@ class PublisherClientImpl
     Map<String, String> queryParams = authProvider().getQueryParams();
     queryParams.put(DEPLOYMENT_ID_QUERY_PARAM, deploymentId);
     return statusPublisherEndpoint.call(centralBaseUrl(), authProvider(), queryParams);
+  }
+
+  @Override
+  public void delete(final String deploymentId) {
+    Map<String, String> queryParams = authProvider().getQueryParams();
+    deletePublisherEndpoint.call(centralBaseUrl(), authProvider(), queryParams, deploymentId);
   }
 
   @Override

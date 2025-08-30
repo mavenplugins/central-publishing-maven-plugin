@@ -24,6 +24,8 @@ public interface PublisherClient
 
   DeploymentApiResponse status(final String deploymentId);
 
+  void delete(final String deploymentId);
+
   boolean isPublished(final String namespace, final String name, final String version);
 
   /**

@@ -50,6 +50,10 @@ public class Constants
 
   public static final String AUTO_PUBLISH_DEFAULT_VALUE = "false";
 
+  public static final String DROP_VALIDATED_NAME = "dropValidated";
+
+  public static final String DROP_VALIDATED_DEFAULT_VALUE = "false";
+
   public static final String WAIT_UNTIL_NAME = "waitUntil";
 
   public static final String WAIT_UNTIL_DEFAULT_VALUE = "VALIDATED";
