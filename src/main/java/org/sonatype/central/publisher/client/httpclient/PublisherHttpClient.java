@@ -13,8 +13,10 @@ import java.util.Map;
 
 import org.sonatype.central.publisher.client.httpclient.auth.AuthProvider;
 
+import org.apache.hc.client5.http.classic.methods.HttpDelete;
 import org.apache.hc.client5.http.classic.methods.HttpGet;
 import org.apache.hc.client5.http.classic.methods.HttpPost;
+import org.apache.hc.client5.http.classic.methods.HttpUriRequestBase;
 import org.apache.hc.client5.http.entity.mime.HttpMultipartMode;
 import org.apache.hc.client5.http.entity.mime.MultipartEntityBuilder;
 import org.apache.hc.client5.http.impl.classic.BasicHttpClientResponseHandler;
@@ -54,11 +56,13 @@ public class PublisherHttpClient
           }
         }
         case GET:
+        case DELETE:
         default: {
-          HttpGet httpGet = new HttpGet(uriBuilder.build());
-          authProvider.getAuthHeaders().forEach(httpGet::addHeader);
+          HttpUriRequestBase httpRequest =
+              requestType == RequestType.DELETE ? new HttpDelete(uriBuilder.build()) : new HttpGet(uriBuilder.build());
+          authProvider.getAuthHeaders().forEach(httpRequest::addHeader);
           try (CloseableHttpClient client = HttpClients.createDefault()) {
-            return client.execute(httpGet, new BasicHttpClientResponseHandler());
+            return client.execute(httpRequest, new BasicHttpClientResponseHandler());
           }
         }
       }

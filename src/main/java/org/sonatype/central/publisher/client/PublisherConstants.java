@@ -15,6 +15,8 @@ public class PublisherConstants
 
   public static final String PUBLISHED_ENDPOINT_URL = "/api/v1/publisher/published";
 
+  public static final String DELETE_ENDPOINT_URL = "/api/v1/publisher/deployment/%s";
+
   public static final String HTTP_AUTHORIZATION_HEADER = "Authorization";
 
   public static final String HTTP_USERTOKEN_AUTH_SCHEME = "UserToken";

@@ -19,10 +19,12 @@ import org.sonatype.central.publisher.plugin.bundler.ArtifactBundler;
 import org.sonatype.central.publisher.plugin.config.PlexusContextConfig;
 import org.sonatype.central.publisher.plugin.deffer.ArtifactDeferrer;
 import org.sonatype.central.publisher.plugin.deffer.ArtifactDeferrerImpl;
+import org.sonatype.central.publisher.plugin.deleter.DeploymentDeleter;
 import org.sonatype.central.publisher.plugin.model.ArtifactWithFile;
 import org.sonatype.central.publisher.plugin.model.BundleArtifactRequest;
 import org.sonatype.central.publisher.plugin.model.ChecksumRequest;
 import org.sonatype.central.publisher.plugin.model.DeferArtifactRequest;
+import org.sonatype.central.publisher.plugin.model.DeleteDeploymentRequest;
 import org.sonatype.central.publisher.plugin.model.StageArtifactRequest;
 import org.sonatype.central.publisher.plugin.model.UploadArtifactRequest;
 import org.sonatype.central.publisher.plugin.model.WaitForDeploymentStateRequest;
@@ -65,6 +67,8 @@ import static org.sonatype.central.publisher.plugin.Constants.DEFAULT_BUNDLE_OUT
 import static org.sonatype.central.publisher.plugin.Constants.DEFAULT_DEFERRED_DIR_NAME;
 import static org.sonatype.central.publisher.plugin.Constants.DEFAULT_DEPLOYMENT_NAME;
 import static org.sonatype.central.publisher.plugin.Constants.DEFAULT_STAGING_DIR_NAME;
+import static org.sonatype.central.publisher.plugin.Constants.DROP_VALIDATED_DEFAULT_VALUE;
+import static org.sonatype.central.publisher.plugin.Constants.DROP_VALIDATED_NAME;
 import static org.sonatype.central.publisher.plugin.Constants.EXCLUDE_ARTIFACTS_NAME;
 import static org.sonatype.central.publisher.plugin.Constants.IGNORE_PUBLISHED_COMPONENTS_DEFAULT_VALUE;
 import static org.sonatype.central.publisher.plugin.Constants.IGNORE_PUBLISHED_COMPONENTS_NAME;
@@ -132,6 +136,16 @@ public class PublishMojo
    */
   @Parameter(property = AUTO_PUBLISH_NAME, defaultValue = AUTO_PUBLISH_DEFAULT_VALUE)
   private boolean autoPublish;
+
+  /**
+   * Assign whether to drop a deployment in validated state. Meaning that the deployment is deleted after validation
+   * succeeded. This configuration is effective only, if {@link #autoPublish} is not set true. Defaults to
+   * {@link Constants#DROP_VALIDATED_DEFAULT_VALUE}.
+   *
+   * @since 1.0.0
+   */
+  @Parameter(property = DROP_VALIDATED_NAME, defaultValue = DROP_VALIDATED_DEFAULT_VALUE)
+  private boolean dropValidated;
 
   /**
    * Assign what to wait for, if desired to wait, of the processing of a deployment. See @{@link WaitUntilRequest} for
@@ -259,6 +273,9 @@ public class PublishMojo
   private ComponentPublishedChecker componentPublishedChecker;
 
   @Component
+  private DeploymentDeleter deploymentDeleter;
+
+  @Component
   private SettingsDecrypter theCryptKeeper;
 
   private ChecksumRequest checksumRequest;
@@ -342,6 +359,33 @@ public class PublishMojo
           waitUntilRequest.name().toLowerCase(),
           AUTO_PUBLISH_NAME,
           AUTO_PUBLISH_DEFAULT_VALUE,
+          WaitUntilRequest.VALIDATED.name().toLowerCase()));
+
+      waitUntilRequest = WaitUntilRequest.VALIDATED;
+    }
+
+    // Disable dropValidated if autoPublish is enabled.
+    if (dropValidated && autoPublish) {
+
+      getLog().warn(format(
+          "%s is forced to %s since %s is set to %s.",
+          DROP_VALIDATED_NAME,
+          DROP_VALIDATED_DEFAULT_VALUE,
+          AUTO_PUBLISH_NAME,
+          Boolean.toString(autoPublish)));
+
+      dropValidated = Boolean.valueOf(DROP_VALIDATED_DEFAULT_VALUE);
+    }
+
+    // Are we asked to wait till something different than finished validation while drop validated is enabled? Enforce
+    // and log it.
+    if (waitUntilRequest != WaitUntilRequest.VALIDATED && dropValidated) {
+
+      getLog().warn(format(
+          "Requested to wait for state: %s, but %s is set to %s. Enforced to wait until %s.",
+          waitUntilRequest.name().toLowerCase(),
+          DROP_VALIDATED_NAME,
+          Boolean.toString(dropValidated),
           WaitUntilRequest.VALIDATED.name().toLowerCase()));
 
       waitUntilRequest = WaitUntilRequest.VALIDATED;
@@ -507,6 +551,12 @@ public class PublishMojo
         waitPollingInterval);
 
     deploymentPublishedWatcher.waitForDeploymentState(waitForDeploymentStateRequest);
+
+    if (dropValidated) {
+      DeleteDeploymentRequest deleteDeploymentRequest = new DeleteDeploymentRequest(deploymentId, deploymentName);
+
+      deploymentDeleter.deleteDeployment(deleteDeploymentRequest);
+    }
   }
 
   protected List<ArtifactWithFile> getArtifactWithFiles() throws MojoExecutionException {
