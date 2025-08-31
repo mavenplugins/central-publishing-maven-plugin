@@ -3,14 +3,12 @@
     Copyright (c) 2022-present Sonatype, Inc. All rights reserved.
     "Sonatype" is a trademark of Sonatype, Inc.
 
--->
-<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-  xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+--><project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
   <modelVersion>4.0.0</modelVersion>
 
   <groupId>io.github.mavenplugins</groupId>
   <artifactId>central-publishing-maven-plugin</artifactId>
-  <version>0.8.2-SNAPSHOT</version>
+  <version>1.0.0</version>
   <packaging>maven-plugin</packaging>
 
   <name>Central Publishing Maven Plugin</name>
@@ -46,7 +44,7 @@
     <url>https://github.com/mavenplugins/central-publishing-maven-plugin</url>
     <connection>scm:git:https://github.com/mavenplugins/central-publishing-maven-plugin.git</connection>
     <developerConnection>scm:git:https://github.com/mavenplugins/central-publishing-maven-plugin.git</developerConnection>
-    <tag>HEAD</tag>
+    <tag>v1.0.0</tag>
   </scm>
 
   <issueManagement>
@@ -74,7 +72,7 @@
     <groupId>org.sonatype.buildsupport</groupId>
     <artifactId>buildsupport</artifactId>
     <version>32</version>
-    <relativePath />
+    <relativePath/>
   </parent>
 
   <properties>
@@ -347,12 +345,12 @@
                 <excludes>
                   <exclude>target/generated-sources/**/*.java</exclude>
                 </excludes>
-                <trimTrailingWhitespace />
-                <endWithNewline />
+                <trimTrailingWhitespace/>
+                <endWithNewline/>
               </format>
             </formats>
             <java>
-              <removeUnusedImports />
+              <removeUnusedImports/>
               <importOrder>
                 <file>${basedir}/sonatype/codestyle/sonatype-eclipse-imports.importorder</file>
               </importOrder>
@@ -601,7 +599,7 @@
         <public-snapshot.url>${organization.snapshotNexusURL}</public-snapshot.url>
 
         <!-- Note: Override javadoc.doclint if required. This must be set for JAVADOC >= 8 only! -->
-        <javadoc.doclint />
+        <javadoc.doclint/>
 
         <!-- Plugin configuration properties -->
         <skip.attach-sources>false</skip.attach-sources>
@@ -615,7 +613,7 @@
         <toolchain.executionPhase>${toolchain.executionDisablePhase}</toolchain.executionPhase>
         <!-- Note: toolchain.jdkVersion is empty by default. It is supposed to be either set by profile 'toolchain'
                    below, by -D option via MAVEN_OPTS, on mvn commandline or by settings.xml -->
-        <toolchain.jdkVersion />
+        <toolchain.jdkVersion/>
         <!-- Sonatype staging -->
         <!-- staging.autoPublish: should be set to false for testing on release version deployments. -->
         <staging.autoPublish>true</staging.autoPublish>
