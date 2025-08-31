@@ -920,6 +920,18 @@
       </properties>
     </profile>
     <profile>
+      <id>mavenplugins-IS_UNLEASH_BUILD</id>
+      <activation>
+        <property>
+          <name>env.IS_UNLEASH_BUILD</name>
+          <value>true</value>
+        </property>
+      </activation>
+      <properties>
+        <version.central-publishing-maven-plugin.forStaging>${version.central-publishing-maven-plugin.released}</version.central-publishing-maven-plugin.forStaging>
+      </properties>
+    </profile>
+    <profile>
       <id>mavenplugins-staging</id>
       <activation>
         <property>
