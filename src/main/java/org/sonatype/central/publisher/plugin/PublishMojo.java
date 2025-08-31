@@ -92,6 +92,8 @@ public class PublishMojo
 {
   /**
    * Name of the bundle file that the plugin will output as a result.
+   *
+   * @since 0.1.1
    */
   @Parameter(property = "outputFilename", defaultValue = DEFAULT_BUNDLE_OUTPUT_FILENAME, required = true)
   private String outputFilename;
@@ -99,6 +101,8 @@ public class PublishMojo
   /**
    * Name of the directory that the plugin will output the bundle file into.<br>
    * <b>Note:</b> this directory will be cleaned on the first execution of this plugin.
+   *
+   * @since 0.1.1
    */
   @Parameter(property = "outputDirectory")
   private File forcedOutputDirectory;
@@ -106,6 +110,8 @@ public class PublishMojo
   /**
    * Name of the directory where the plugin will stage files.<br>
    * <b>Note:</b> this directory will be cleaned on the first execution of this plugin.
+   *
+   * @since 0.1.1
    */
   @Parameter(property = "stagingDirectory")
   private File forcedStagingDirectory;
@@ -113,6 +119,8 @@ public class PublishMojo
   /**
    * Name of the directory where the plugin will defer snapshot files.<br>
    * <b>Note:</b> this directory will be cleaned on the first execution of this plugin.
+   *
+   * @since 0.7.0
    */
   @Parameter(property = "deferredDirectory")
   private File forcedDeferredDirectory;
@@ -120,12 +128,16 @@ public class PublishMojo
   /**
    * Name of the deployment that's used for uploading and deploying on the central url. If using
    * <code>central.sonatype.com</code>, this is the name that will be visible on the Deployments page.
+   *
+   * @since 0.1.1
    */
   @Parameter(property = "deploymentName", defaultValue = DEFAULT_DEPLOYMENT_NAME)
   private String deploymentName;
 
   /**
    * ID of the server that you configured in your <code>settings.xml</code>.
+   *
+   * @since 0.1.1
    */
   @Parameter(property = PUBLISHING_SERVER_ID_NAME, defaultValue = PUBLISHING_SERVER_ID_DEFAULT_VALUE)
   private String publishingServerId;
@@ -133,6 +145,8 @@ public class PublishMojo
   /**
    * Assign whether to auto publish a deployment. Meaning that no manual intervention is required, if a deployment is
    * considered valid, before publishing it. Defaults to {@link Constants#AUTO_PUBLISH_DEFAULT_VALUE}.
+   *
+   * @since 0.2.0
    */
   @Parameter(property = AUTO_PUBLISH_NAME, defaultValue = AUTO_PUBLISH_DEFAULT_VALUE)
   private boolean autoPublish;
@@ -158,6 +172,8 @@ public class PublishMojo
    * <code>published</code> - Wait until the uploaded bundle is published to Maven Central.
    * <p/>
    * Defaults to {@link Constants#WAIT_UNTIL_DEFAULT_VALUE}.
+   *
+   * @since 0.2.0
    */
   @Parameter(
       property = WAIT_UNTIL_NAME,
@@ -167,6 +183,8 @@ public class PublishMojo
   /**
    * Assign the amount of seconds that the plugin will wait for a deployment state. Can not be less than
    * {@link Constants#WAIT_MAX_TIME_DEFAULT_VALUE}.
+   *
+   * @since 0.2.0
    */
   @Parameter(
       property = WAIT_MAX_TIME_NAME,
@@ -176,6 +194,8 @@ public class PublishMojo
   /**
    * Assign the amount of seconds between checking whether a deployment has published. Can not be less than
    * {@link Constants#WAIT_POLLING_INTERVAL_DEFAULT_VALUE}.
+   *
+   * @since 0.2.0
    */
   @Parameter(
       property = WAIT_POLLING_INTERVAL_NAME,
@@ -184,6 +204,8 @@ public class PublishMojo
 
   /**
    * @deprecated use {@link #waitPollingInterval} instead
+   *
+   * @since 0.1.1
    */
   @Deprecated
   @Parameter(
@@ -193,6 +215,8 @@ public class PublishMojo
 
   /**
    * @deprecated use {@link #autoPublish} in combination with {@link #waitUntil} instead
+   *
+   * @since 0.1.1
    */
   @Deprecated
   @Parameter(property = WAIT_FOR_PUBLISH_COMPLETION_NAME, defaultValue = WAIT_FOR_PUBLISH_COMPLETION_DEFAULT_VALUE)
@@ -201,6 +225,8 @@ public class PublishMojo
   /**
    * Assign the URL that this plugin uses to publish releases. Defaults to
    * {@link Constants#CENTRAL_BASE_URL_DEFAULT_VALUE}.
+   *
+   * @since 0.1.1
    */
   @Parameter(property = CENTRAL_BASE_URL_NAME, defaultValue = CENTRAL_BASE_URL_DEFAULT_VALUE)
   private String centralBaseUrl;
@@ -214,6 +240,8 @@ public class PublishMojo
    * b) Use repo URL defined by distributionManagement from project POM if this is defined.
    * <p/>
    * c) Use {@link Constants#CENTRAL_SNAPSHOTS_URL_DEFAULT_VALUE} as default if {@link #publishingServerId} is set.
+   *
+   * @since 0.7.0
    */
   @Parameter(property = CENTRAL_SNAPSHOTS_URL_NAME)
   private String centralSnapshotsUrl;
@@ -227,6 +255,8 @@ public class PublishMojo
    * <p/>
    * <code>none</code> - No Checksums will be requested to be generated.
    * <p/>
+   *
+   * @since 0.1.1
    */
   @Parameter(property = CHECKSUMS_NAME, defaultValue = CHECKSUMS_DEFAULT_VALUE)
   private String checksums;
@@ -238,12 +268,16 @@ public class PublishMojo
    * new version X.Y.1 of child2, but leave child1 and parent unchanged), this setting will assure that previous
    * published components will not be published again, which will cause the publishing to fail. Defaults to
    * {@link Constants#IGNORE_PUBLISHED_COMPONENTS_DEFAULT_VALUE}.
+   *
+   * @since 0.1.6
    */
   @Parameter(property = IGNORE_PUBLISHED_COMPONENTS_NAME, defaultValue = IGNORE_PUBLISHED_COMPONENTS_DEFAULT_VALUE)
   private boolean ignorePublishedComponents;
 
   /**
    * Assign artifacts that must not be added to the bundle that represents the deployment that will be published.
+   *
+   * @since 0.1.6
    */
   @Parameter(property = EXCLUDE_ARTIFACTS_NAME)
   private List<String> excludeArtifacts = new ArrayList<>();
