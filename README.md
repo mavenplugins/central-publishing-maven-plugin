@@ -12,8 +12,10 @@ The original SCM URL [central-publishing-maven-plugin Source Control](https://gi
 
 
 ## Documentation
-- [Plugin Documentation](https://mavenplugins.github.io/central-publishing-maven-plugin/)
-- [Sonatype: Publishing via the Central Portal](https://central.sonatype.org/publish/publish-portal-maven/)
+- [Central Publishing Maven Plugin](https://mavenplugins.github.io/central-publishing-maven-plugin/)
+- Sonatype:
+  - [Publishing via the Central Portal](https://central.sonatype.org/publish/publish-portal-maven/)
+  - [Publisher API](https://central.sonatype.com/api-doc)
 
 
 ## Changelog
