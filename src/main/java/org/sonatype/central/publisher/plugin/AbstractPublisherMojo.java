@@ -21,12 +21,16 @@ public abstract class AbstractPublisherMojo
   /**
    * For creating only the bundle but skipping uploading and publishing. This is useful for creating a bundle and
    * manually uploading it through <code>central.sonatype.com</code>.
+   *
+   * @since 0.1.1
    */
   @Parameter(property = "skipPublishing", defaultValue = "false", required = true)
   private boolean skipPublishing;
 
   /**
    * Indicates if building is allowed to have the plugin fail before uploading and publishing occurs.
+   *
+   * @since 0.1.1
    */
   @Parameter(property = "failOnBuildFailure", defaultValue = "true")
   private boolean failOnBuildFailure;
