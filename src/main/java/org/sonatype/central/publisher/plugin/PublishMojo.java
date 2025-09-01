@@ -499,6 +499,11 @@ public class PublishMojo
       final List<ArtifactWithFile> artifactWithFiles,
       final File deferredDirectory) throws MojoExecutionException
   {
+    if (isSkipBundling()) {
+      getLog().info("Skipping bundling of artifacts at user's request.");
+      return;
+    }
+
     List<ArtifactWithFile> filteredArtifactWithFiles = artifactWithFiles.stream()
         .filter(artifactWithFile -> !excludeArtifacts.contains(artifactWithFile.getArtifact().getArtifactId()))
         .collect(toList());
@@ -521,6 +526,11 @@ public class PublishMojo
       final List<ArtifactWithFile> artifactWithFiles,
       final File stagingDirectory) throws MojoExecutionException
   {
+    if (isSkipBundling()) {
+      getLog().info("Skipping bundling of artifacts at user's request.");
+      return;
+    }
+
     List<ArtifactWithFile> filteredArtifactWithFiles = artifactWithFiles.stream()
         .filter(artifactWithFile -> {
           if (excludeArtifacts.contains(artifactWithFile.getArtifact().getArtifactId())) {
