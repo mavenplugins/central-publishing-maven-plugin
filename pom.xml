@@ -652,7 +652,7 @@
 
         <!-- Sonatype Maven Central Publishing Plugin GAVs -->
         <groupId.central-publishing-maven-plugin.released>io.github.mavenplugins</groupId.central-publishing-maven-plugin.released>
-        <version.central-publishing-maven-plugin.released>1.0.0</version.central-publishing-maven-plugin.released>
+        <version.central-publishing-maven-plugin.released>1.1.0</version.central-publishing-maven-plugin.released>
         <groupId.central-publishing-maven-plugin.forStaging>${groupId.central-publishing-maven-plugin.released}</groupId.central-publishing-maven-plugin.forStaging>
         <version.central-publishing-maven-plugin.forStaging>${version.central-publishing-maven-plugin.released}</version.central-publishing-maven-plugin.forStaging>
 
