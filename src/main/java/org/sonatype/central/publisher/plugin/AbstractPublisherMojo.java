@@ -29,9 +29,11 @@ public abstract class AbstractPublisherMojo
 
   /**
    * For skipping artifacts bundling.
-   +
-   + This is particularly useful for multi-module build, where some sub-modules should
-   + not be included in the final bundle that will be uploaded to <code>central.sonatype.com</code>.
+   *
+   * This is particularly useful for multi-module build, where some sub-modules should
+   * not be included in the final bundle that will be uploaded to <code>central.sonatype.com</code>.
+   *
+   * @since 1.1.0
    */
   @Parameter(property = "skipBundling", defaultValue = "false", required = false)
   private boolean skipBundling;
