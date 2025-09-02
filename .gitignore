@@ -17,3 +17,6 @@ buildNumber.properties
 .classpath
 # Eclipse settings to be managed by Oomph
 .settings/
+
+# IntelliJ IDEA
+.idea/

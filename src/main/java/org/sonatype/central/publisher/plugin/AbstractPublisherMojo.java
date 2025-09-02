@@ -28,6 +28,17 @@ public abstract class AbstractPublisherMojo
   private boolean skipPublishing;
 
   /**
+   * For skipping artifacts bundling.
+   *
+   * This is particularly useful for multi-module build, where some sub-modules should
+   * not be included in the final bundle that will be uploaded to <code>central.sonatype.com</code>.
+   *
+   * @since 1.1.0
+   */
+  @Parameter(property = "skipBundling", defaultValue = "false", required = false)
+  private boolean skipBundling;
+
+  /**
    * Indicates if building is allowed to have the plugin fail before uploading and publishing occurs.
    *
    * @since 0.1.1
@@ -93,6 +104,10 @@ public abstract class AbstractPublisherMojo
 
   protected boolean isSkipPublishing() {
     return skipPublishing;
+  }
+
+  protected boolean isSkipBundling() {
+    return skipBundling;
   }
 
   protected String getPluginGav() {
