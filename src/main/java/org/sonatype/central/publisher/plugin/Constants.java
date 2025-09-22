@@ -30,7 +30,7 @@ public class Constants
 
   public static final String PUBLISH_GOAL_ID = "injected-central-publishing";
 
-  public static final String CENTRAL_PUBLISHING_PLUGIN_GROUP_ID = "org.sonatype.central";
+  public static final String CENTRAL_PUBLISHING_PLUGIN_GROUP_ID = "io.github.mavenplugins";
 
   public static final String CENTRAL_PUBLISHING_PLUGIN_ARTIFACT_ID = "central-publishing-maven-plugin";
 
