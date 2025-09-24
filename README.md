@@ -10,10 +10,11 @@ Source code initially taken from [central-publishing-maven-plugin on Maven Centr
 
 The original SCM URL [central-publishing-maven-plugin Source Control](https://github.com/sonatype/central-publishing-maven-plugin) is looking to be a private repo.
 
-⚠️ **Note** that this is an Open Source fork of the original Sonatype managed plugin.<br>
-⚠️ It has a different groupId `io.github.mavenplugins`.
-
-Please refer to [Release Notes](https://github.com/mavenplugins/central-publishing-maven-plugin/releases) for enhancements vs. the original Sonatype managed plugin.
+> [!NOTE]
+> This is an Open Source fork of the original Sonatype managed plugin.<br>
+> It has a different groupId `io.github.mavenplugins`.<br>
+>
+> Please refer to [Release Notes](https://github.com/mavenplugins/central-publishing-maven-plugin/releases) for enhancements vs. the original Sonatype managed plugin.
 
 
 ## Documentation
