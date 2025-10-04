@@ -19,6 +19,9 @@ public class DirectoryUtils
    * @return true if the directory contains files, false otherwise
    */
   public static boolean hasFiles(final File directory) {
+    if (directory == null) {
+      return false;
+    }
     try {
       if (directory.exists()) {
         Path path = directory.toPath();
