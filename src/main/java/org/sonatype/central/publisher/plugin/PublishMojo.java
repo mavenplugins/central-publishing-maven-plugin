@@ -11,7 +11,6 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.stream.Stream;
 
 import org.sonatype.central.publisher.client.PublisherClient;
 import org.sonatype.central.publisher.client.model.PublishingType;
@@ -30,6 +29,7 @@ import org.sonatype.central.publisher.plugin.published.ComponentPublishedChecker
 import org.sonatype.central.publisher.plugin.stager.ArtifactStager;
 import org.sonatype.central.publisher.plugin.uploader.ArtifactUploader;
 import org.sonatype.central.publisher.plugin.utils.AuthData;
+import org.sonatype.central.publisher.plugin.utils.DirectoryUtils;
 import org.sonatype.central.publisher.plugin.watcher.DeploymentPublishedWatcher;
 
 import org.apache.commons.io.FileUtils;
@@ -347,12 +347,12 @@ public class PublishMojo
       throws MojoExecutionException
   {
     try {
-      if (Files.exists(new File(deferredDirectory, INDEX_FILE_NAME).toPath())) {
+      if (!DirectoryUtils.hasFiles(deferredDirectory)) {
+        getLog().debug("Skipping Central Staging Publishing as no staged artifacts were found.");
+        return;
+      }
 
-        if (isSkipPublishing()) {
-          getLog().info("Skipping Central SNAPSHOT Publishing at user's request.");
-          return;
-        }
+      if (Files.exists(new File(deferredDirectory, INDEX_FILE_NAME).toPath())) {
 
         // note that we pass a null for the remote repository, to get repository from the index from an install.
         artifactDeferrer.deployUp(getMavenSession(), deferredDirectory, null);
@@ -370,7 +370,19 @@ public class PublishMojo
       throws MojoExecutionException
   {
     List<ArtifactWithFile> filteredArtifactWithFiles = artifactWithFiles.stream()
-        .filter(artifactWithFile -> !excludeArtifacts.contains(artifactWithFile.getArtifact().getArtifactId()))
+        .filter(artifactWithFile -> {
+          if (excludeArtifacts.contains(artifactWithFile.getArtifact().getArtifactId())) {
+            return false;
+          }
+
+          if (isSkipPublishing()) {
+            getLog().info("Skipping Central Snapshot Publishing for artifact '" +
+                artifactWithFile.getArtifact().getArtifactId() + "' at user's request.");
+            return false;
+          }
+
+          return true;
+        })
         .collect(toList());
 
     try {
@@ -403,6 +415,12 @@ public class PublishMojo
                 artifactWithFile.getArtifact().getArtifactId(), artifactWithFile.getArtifact().getVersion());
           }
 
+          if (isSkipPublishing()) {
+            getLog().info("Skipping Central Release Publishing for artifact '" +
+                artifactWithFile.getArtifact().getArtifactId() + "' at user's request.");
+            return false;
+          }
+
           return true;
         }).collect(toList());
 
@@ -420,7 +438,7 @@ public class PublishMojo
       final File outputDirectory,
       final String deploymentName)
   {
-    if (!hasFiles(stagingDirectory)) {
+    if (!DirectoryUtils.hasFiles(stagingDirectory)) {
       getLog().debug("Skipping Central Release Publishing as no staged artifacts were found.");
       return;
     }
@@ -433,11 +451,6 @@ public class PublishMojo
             outputFilename,
             checksumRequest
         ));
-
-    if (isSkipPublishing()) {
-      getLog().info("Skipping Central Release Publishing at user's request.");
-      return;
-    }
 
     UploadArtifactRequest uploadRequest = new UploadArtifactRequest(deploymentName, bundleFile, publishingType);
     String deploymentId = artifactUploader.upload(uploadRequest);
@@ -557,20 +570,5 @@ public class PublishMojo
         waitUntilRequest.name().toLowerCase(),
         centralBaseURL
     ));
-  }
-
-  private boolean hasFiles(final File directory) {
-    try {
-      Path path = directory.toPath();
-      if (Files.exists(path) && Files.isDirectory(path)) {
-        try (Stream<Path> paths = Files.list(path)) {
-          return paths.findFirst().isPresent();
-        }
-      }
-    }
-    catch (IOException ignored) {
-    }
-
-    return false;
   }
 }

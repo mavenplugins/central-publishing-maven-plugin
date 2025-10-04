@@ -56,7 +56,7 @@ public class ArtifactStagerImpl
       }
     }
     else {
-      getLogger().info("No files to stage!");
+      getLogger().info("No files to stage for artifact");
     }
   }
 
