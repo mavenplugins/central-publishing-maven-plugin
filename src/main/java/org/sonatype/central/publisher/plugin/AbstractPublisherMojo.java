@@ -19,8 +19,11 @@ public abstract class AbstractPublisherMojo
     extends AbstractMojo
 {
   /**
-   * For creating only the bundle but skipping uploading and publishing. This is useful for creating a bundle and
-   * manually uploading it through <code>central.sonatype.com</code>.
+   * For skipping artifacts bundling and uploading.
+   *
+   * This is useful for skipping particular or all artifacts from bundling and uploading to
+   * <code>central.sonatype.com</code>.<br>
+   * Since <code>0.9.0</code> checked per module and artifact.
    *
    * @since 0.1.1
    */
@@ -34,7 +37,9 @@ public abstract class AbstractPublisherMojo
    * not be included in the final bundle that will be uploaded to <code>central.sonatype.com</code>.
    *
    * @since 1.1.0
+   * @deprecated Use <code>skipPublishing</code> since <code>1.2.0</code> instead.
    */
+  @Deprecated
   @Parameter(property = "skipBundling", defaultValue = "false", required = false)
   private boolean skipBundling;
 
@@ -103,9 +108,14 @@ public abstract class AbstractPublisherMojo
   }
 
   protected boolean isSkipPublishing() {
-    return skipPublishing;
+    return skipPublishing || isSkipBundling();
   }
 
+  /**
+   * @return {@link #skipBundling}
+   * @deprecated Use {@link #isSkipPublishing()} instead.
+   */
+  @Deprecated
   protected boolean isSkipBundling() {
     return skipBundling;
   }
