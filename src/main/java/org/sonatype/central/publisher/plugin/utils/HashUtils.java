@@ -6,7 +6,7 @@ package org.sonatype.central.publisher.plugin.utils;
 
 import java.io.File;
 
-import javax.annotation.Nullable;
+import org.jspecify.annotations.Nullable;
 
 public interface HashUtils
 {
