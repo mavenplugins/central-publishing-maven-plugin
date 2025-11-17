@@ -661,7 +661,7 @@
         <!-- Unleash Maven Plugin -->
         <groupId.unleash-maven-plugin>${groupId.unleash.common}</groupId.unleash-maven-plugin>
         <artifactId.unleash-maven-plugin>unleash-maven-plugin</artifactId.unleash-maven-plugin>
-        <version.unleash-maven-plugin>3.3.0</version.unleash-maven-plugin>
+        <version.unleash-maven-plugin>3.3.3</version.unleash-maven-plugin>
         <!-- Unleash SCM Provider -->
         <groupId.unleash-scm-provider>${groupId.unleash.common}</groupId.unleash-scm-provider>
         <groupId.unleash-scm-provider-git>${groupId.unleash-scm-provider}</groupId.unleash-scm-provider-git>
@@ -673,7 +673,7 @@
         <!-- Unleash CDI Plugin Hooks -->
         <groupId.cdi-plugin-hooks>${groupId.unleash.common}</groupId.cdi-plugin-hooks>
         <artifactId.cdi-plugin-hooks>cdi-plugin-hooks</artifactId.cdi-plugin-hooks>
-        <version.cdi-plugin-hooks>0.2.1</version.cdi-plugin-hooks>
+        <version.cdi-plugin-hooks>0.2.2</version.cdi-plugin-hooks>
       </properties>
 
       <build>
