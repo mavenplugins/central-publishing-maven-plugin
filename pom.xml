@@ -666,7 +666,7 @@
         <groupId.unleash-scm-provider>${groupId.unleash.common}</groupId.unleash-scm-provider>
         <groupId.unleash-scm-provider-git>${groupId.unleash-scm-provider}</groupId.unleash-scm-provider-git>
         <artifactId.unleash-scm-provider-git>unleash-scm-provider-git</artifactId.unleash-scm-provider-git>
-        <version.unleash-scm-provider-git>3.3.0</version.unleash-scm-provider-git>
+        <version.unleash-scm-provider-git>3.3.1</version.unleash-scm-provider-git>
         <groupId.unleash-scm-provider-svn>${groupId.unleash-scm-provider}</groupId.unleash-scm-provider-svn>
         <artifactId.unleash-scm-provider-svn>unleash-scm-provider-svn</artifactId.unleash-scm-provider-svn>
         <version.unleash-scm-provider-svn>3.0.2</version.unleash-scm-provider-svn>
