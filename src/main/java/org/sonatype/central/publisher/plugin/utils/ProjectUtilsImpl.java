@@ -10,6 +10,7 @@ import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
+import java.util.Optional;
 
 import org.sonatype.central.publisher.plugin.model.ArtifactWithFile;
 import org.sonatype.central.publisher.plugin.model.ChecksumRequest;
@@ -141,7 +142,8 @@ public class ProjectUtilsImpl
 
   private List<ArtifactWithFile> getArtifactsFromPomProject(final MavenProject mavenProject) {
     List<ArtifactWithFile> artifactWithFiles = new ArrayList<>();
-    artifactWithFiles.add(new ArtifactWithFile(mavenProject.getFile(), mavenProject.getArtifact()));
+    File pomFile = findConsumerPom(mavenProject).orElse(mavenProject.getFile());
+    artifactWithFiles.add(new ArtifactWithFile(pomFile, mavenProject.getArtifact()));
 
     artifactWithFiles.addAll(getAttachedArtifacts(mavenProject));
 
@@ -156,7 +158,8 @@ public class ProjectUtilsImpl
     List<Artifact> attachedArtifacts = mavenProject.getAttachedArtifacts();
     List<ArtifactWithFile> artifactWithFiles = new ArrayList<>();
 
-    artifact.addMetadata(new ProjectArtifactMetadata(artifact, mavenProject.getFile()));
+    File pomFile = findConsumerPom(mavenProject).orElse(mavenProject.getFile());
+    artifact.addMetadata(new ProjectArtifactMetadata(artifact, pomFile));
 
     final File file = artifact.getFile();
 
@@ -169,7 +172,7 @@ public class ProjectUtilsImpl
       final Artifact pomArtifact =
           artifactFactory.createProjectArtifact(artifact.getGroupId(), artifact.getArtifactId(),
               artifact.getBaseVersion());
-      pomArtifact.setFile(mavenProject.getFile());
+      pomArtifact.setFile(pomFile);
 
       artifactWithFiles.add(new ArtifactWithFile(pomArtifact.getFile(), pomArtifact));
 
@@ -185,11 +188,70 @@ public class ProjectUtilsImpl
     return artifactWithFiles;
   }
 
+  private static final String CONSUMER_CLASSIFIER = "consumer";
+
+  private static final String POM_TYPE = "pom";
+
+  private static final String POM_SIGNATURE_TYPE = "pom.asc";
+
+  /**
+   * Collect attached artifacts, replacing Maven 4 consumer POM artifacts with their proper roles.
+   * Single-pass over attached artifacts to classify and transform them.
+   */
   private List<ArtifactWithFile> getAttachedArtifacts(final MavenProject mavenProject) {
-    return mavenProject.getAttachedArtifacts()
+    File consumerPomSignatureFile = null;
+    List<Artifact> regularArtifacts = new ArrayList<>();
+
+    for (Artifact artifact : mavenProject.getAttachedArtifacts()) {
+      if (isConsumerPom(artifact) || isConsumerPomSignature(artifact)) {
+        if (isConsumerPomSignature(artifact)) {
+          consumerPomSignatureFile = artifact.getFile();
+        }
+        // consumer POM and its signature are excluded from regular artifacts
+      }
+      else {
+        regularArtifacts.add(artifact);
+      }
+    }
+
+    final File pomSignatureReplacement = consumerPomSignatureFile;
+    return regularArtifacts
         .stream()
-        .map(artifact -> new ArtifactWithFile(artifact.getFile(), artifact))
+        .map(artifact -> {
+          if (pomSignatureReplacement != null && isBuildPomSignature(artifact)) {
+            return new ArtifactWithFile(pomSignatureReplacement, artifact);
+          }
+          return new ArtifactWithFile(artifact.getFile(), artifact);
+        })
         .collect(toList());
+  }
+
+  /**
+   * Find the Maven 4 consumer POM among attached artifacts.
+   * Maven 4 attaches it with classifier "consumer" and type "pom".
+   */
+  private Optional<File> findConsumerPom(final MavenProject mavenProject) {
+    for (Artifact artifact : mavenProject.getAttachedArtifacts()) {
+      if (isConsumerPom(artifact)) {
+        return Optional.ofNullable(artifact.getFile());
+      }
+    }
+    return Optional.empty();
+  }
+
+  private static boolean isConsumerPom(final Artifact artifact) {
+    return CONSUMER_CLASSIFIER.equals(artifact.getClassifier())
+        && POM_TYPE.equals(artifact.getType());
+  }
+
+  private static boolean isConsumerPomSignature(final Artifact artifact) {
+    return CONSUMER_CLASSIFIER.equals(artifact.getClassifier())
+        && POM_SIGNATURE_TYPE.equals(artifact.getType());
+  }
+
+  private static boolean isBuildPomSignature(final Artifact artifact) {
+    return (artifact.getClassifier() == null || artifact.getClassifier().isEmpty())
+        && POM_SIGNATURE_TYPE.equals(artifact.getType());
   }
 
   private void deleteMavenMetadataCentralStagingXml(final MavenProject project, final Path sourceDir) {
