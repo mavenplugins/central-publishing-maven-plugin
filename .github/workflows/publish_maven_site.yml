@@ -163,7 +163,7 @@ jobs:
           TEST_REPO_KEY_PASSPHRASE: ${{ secrets.TEST_REPO_KEY_PASSPHRASE }}
 
       - name: Setup Pages
-        uses: actions/configure-pages@v5
+        uses: actions/configure-pages@v6
       - name: Upload site artifact
         uses: actions/upload-pages-artifact@v4
         with:
