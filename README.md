@@ -1,8 +1,9 @@
 # central-publishing-maven-plugin
 
 [![Apache License](https://img.shields.io/github/license/mavenplugins/central-publishing-maven-plugin?label=License)](./LICENSE)
-[![Maven Central](https://img.shields.io/maven-central/v/io.github.mavenplugins/central-publishing-maven-plugin.svg?label=Maven%20Central)](https://search.maven.org/artifact/io.github.mavenplugins/central-publishing-maven-plugin)
 [![CI](https://github.com/mavenplugins/central-publishing-maven-plugin/actions/workflows/build_and_deploy.yml/badge.svg)](https://github.com/mavenplugins/central-publishing-maven-plugin/actions/workflows/build_and_deploy.yml)
+[![Maven Central Snapshot](https://img.shields.io/maven-metadata/v?label=Maven%20Central%20Snapshot&metadataUrl=https%3A%2F%2Fcentral.sonatype.com%2Frepository%2Fmaven-snapshots%2Fio%2Fgithub%2Fmavenplugins%2Fcentral-publishing-maven-plugin%2Fmaven-metadata.xml)](https://central.sonatype.com/repository/maven-snapshots/io/github/mavenplugins/central-publishing-maven-plugin/maven-metadata.xml)
+[![Maven Central](https://img.shields.io/maven-central/v/io.github.mavenplugins/central-publishing-maven-plugin.svg?label=Maven%20Central)](https://search.maven.org/artifact/io.github.mavenplugins/central-publishing-maven-plugin)
 
 
 ## Overview 
