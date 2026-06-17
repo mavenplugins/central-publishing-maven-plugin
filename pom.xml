@@ -11,7 +11,7 @@
 
   <groupId>org.sonatype.central</groupId>
   <artifactId>central-publishing-maven-plugin</artifactId>
-  <version>0.10.0</version>
+  <version>0.11.0</version>
   <packaging>maven-plugin</packaging>
 
   <name>Central Publishing Maven Plugin</name>
@@ -37,7 +37,7 @@
   <parent>
     <groupId>org.sonatype.buildsupport</groupId>
     <artifactId>buildsupport</artifactId>
-    <version>32</version>
+    <version>55</version>
   </parent>
 
   <properties>
@@ -459,8 +459,8 @@
           </plugin>
           <plugin>
             <!-- use our own just built version -->
-            <groupId>${project.groupId}</groupId>
-            <artifactId>${project.artifactId}</artifactId>
+            <groupId>org.sonatype.central</groupId>
+            <artifactId>central-publishing-maven-plugin</artifactId>
             <version>${project.version}</version>
             <executions>
               <execution>
