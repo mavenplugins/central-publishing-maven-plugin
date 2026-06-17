@@ -672,7 +672,7 @@ public class PublishMojo
     getLog().info("Using credentials from server id " + publishingServerId + " in settings.xml");
 
     AuthData authData = getUserCredentials();
-    getLog().info("Using Usertoken auth, with namecode: " + authData.getUsername());
+    getLog().debug("Using Usertoken auth, with namecode: " + authData.getUsername());
     publisherClient.setAuthProvider(USERTOKEN, DEFAULT_ORGANIZATION_ID,
         authData.getUsername(),
         authData.getPassword());

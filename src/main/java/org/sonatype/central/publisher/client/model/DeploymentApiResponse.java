@@ -5,6 +5,7 @@
 
 package org.sonatype.central.publisher.client.model;
 
+import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 
@@ -19,6 +20,8 @@ public class DeploymentApiResponse
   private List<String> purls;
 
   private Map<String, List<String>> errors;
+
+  private List<String> warnings;
 
   public String getDeploymentId() {
     return deploymentId;
@@ -58,5 +61,13 @@ public class DeploymentApiResponse
 
   public void setErrors(final Map<String, List<String>> errors) {
     this.errors = errors;
+  }
+
+  public List<String> getWarnings() {
+    return warnings == null ? Collections.emptyList() : warnings;
+  }
+
+  public void setWarnings(final List<String> warnings) {
+    this.warnings = warnings;
   }
 }
