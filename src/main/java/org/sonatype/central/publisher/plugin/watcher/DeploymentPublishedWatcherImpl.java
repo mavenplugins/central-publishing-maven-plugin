@@ -83,6 +83,7 @@ public class DeploymentPublishedWatcherImpl
           case VALIDATED:
           case PUBLISHING:
             if (waitUntilRequest == WaitUntilRequest.UPLOADED || waitUntilRequest == WaitUntilRequest.VALIDATED) {
+              outputWarnings(status);
               outputWhereToFinishPublishing(waitForDeploymentStateRequest, deploymentId);
               return;
             }
@@ -104,7 +105,13 @@ public class DeploymentPublishedWatcherImpl
     outputTimeout(deploymentId, status);
   }
 
+  private void outputWarnings(final DeploymentApiResponse status) {
+    status.getWarnings().forEach(msg -> getLogger().warn(msg));
+  }
+
   private void outputPublished(final DeploymentApiResponse status) {
+    outputWarnings(status);
+
     StringBuilder successMessage = new StringBuilder();
 
     successMessage
