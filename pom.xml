@@ -333,7 +333,7 @@
           <!-- see developer-documentation/development/formatting.md -->
           <groupId>com.diffplug.spotless</groupId>
           <artifactId>spotless-maven-plugin</artifactId>
-          <version>2.46.1</version>
+          <version>3.7.0</version>
           <configuration>
             <!-- Note: On CI ratchetFrom requires 'git fetch origin master' to be performed at least once. -->
             <!-- <ratchetFrom>origin/master</ratchetFrom> -->
