@@ -648,7 +648,7 @@
         <version.maven-toolchains-plugin>3.2.0</version.maven-toolchains-plugin>
         <version.maven-plugin-report-plugin>4.0.0-beta-1</version.maven-plugin-report-plugin>
         <version.maven-project-info-reports-plugin>3.9.0</version.maven-project-info-reports-plugin>
-        <version.maven-site-plugin>3.21.0</version.maven-site-plugin>
+        <version.maven-site-plugin>3.22.0</version.maven-site-plugin>
 
         <!-- Sonatype Maven Central Publishing Plugin GAVs -->
         <groupId.central-publishing-maven-plugin.released>io.github.mavenplugins</groupId.central-publishing-maven-plugin.released>
