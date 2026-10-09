@@ -31,6 +31,17 @@ public interface ProjectUtils
   void deleteGroupArtifactMavenMetadataCentralStagingXml(final MavenProject project, final Path sourceDir);
 
   /**
+   * Delete the files a local repository keeps about its content from anywhere within the given {@code sourceDir}:
+   * {@link ProjectUtilsImpl#MAVEN_METADATA_LOCAL_XML}, {@link ProjectUtilsImpl#REMOTE_REPOSITORIES}, their checksums,
+   * and the {@link ProjectUtilsImpl#LOCKS_DIRECTORY}. Since Maven 3.10 staging writes them, and Central rejects a
+   * bundle
+   * which holds them.
+   *
+   * @param sourceDir - {@link Path}
+   */
+  void deleteLocalRepositoryFiles(final Path sourceDir);
+
+  /**
    * Create checksum files for the direct files in the {@code sourceDir}. For example, if a {@code sourceDir} contains
    * the file TEST-1.0.pom, checksum files will be created for all the requested checksums in the given
    * {@code checksumRequest}, like TEST-1.0.pom.md5
