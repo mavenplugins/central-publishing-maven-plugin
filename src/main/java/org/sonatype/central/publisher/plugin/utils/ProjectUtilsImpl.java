@@ -5,8 +5,14 @@
 package org.sonatype.central.publisher.plugin.utils;
 
 import java.io.File;
+import java.io.IOException;
+import java.io.UncheckedIOException;
 import java.nio.file.FileSystems;
+import java.nio.file.FileVisitResult;
+import java.nio.file.Files;
 import java.nio.file.Path;
+import java.nio.file.SimpleFileVisitor;
+import java.nio.file.attribute.BasicFileAttributes;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
@@ -35,6 +41,23 @@ public class ProjectUtilsImpl
 {
   public static final String MAVEN_METADATA_CENTRAL_STAGING_XML = "maven-metadata-central-staging.xml";
 
+  /**
+   * The metadata a local repository keeps for a group and an artifact. Maven 3.10 writes it into the staging directory.
+   */
+  public static final String MAVEN_METADATA_LOCAL_XML = "maven-metadata-local.xml";
+
+  /**
+   * The file a local repository keeps in each version directory to track where the artifacts came from. Maven 3.10
+   * writes it into the staging directory.
+   */
+  public static final String REMOTE_REPOSITORIES = "_remote.repositories";
+
+  /**
+   * The directory of the file locks Maven Resolver 2 takes on a local repository. Maven 3.10 creates it in the staging
+   * directory.
+   */
+  public static final String LOCKS_DIRECTORY = ".locks";
+
   @Requirement
   private HashUtils hashUtils;
 
@@ -61,6 +84,72 @@ public class ProjectUtilsImpl
     }
 
     deleteMavenMetadataCentralStagingXml(project, sourceDir);
+  }
+
+  @Override
+  public void deleteLocalRepositoryFiles(final Path sourceDir) {
+    if (!Files.isDirectory(sourceDir)) {
+      return;
+    }
+    try {
+      Files.walkFileTree(sourceDir, new SimpleFileVisitor<Path>()
+      {
+        @Override
+        public FileVisitResult preVisitDirectory(final Path dir, final BasicFileAttributes attrs) throws IOException {
+          if (!dir.equals(sourceDir) && LOCKS_DIRECTORY.equals(fileName(dir))) {
+            deleteDirectory(dir);
+            return FileVisitResult.SKIP_SUBTREE;
+          }
+          return FileVisitResult.CONTINUE;
+        }
+
+        @Override
+        public FileVisitResult visitFile(final Path file, final BasicFileAttributes attrs) throws IOException {
+          if (isLocalRepositoryFile(fileName(file))) {
+            Files.delete(file);
+            getLogger().info(String.format("Pre Bundling - deleted %s", file));
+          }
+          return FileVisitResult.CONTINUE;
+        }
+      });
+    }
+    catch (IOException e) {
+      throw new UncheckedIOException("Unable to delete the local repository files from " + sourceDir, e);
+    }
+  }
+
+  /**
+   * Whether a file is one a local repository keeps about its content, or a checksum of one, rather than an artifact.
+   */
+  private static boolean isLocalRepositoryFile(final String name) {
+    return name.equals(MAVEN_METADATA_LOCAL_XML) || name.startsWith(MAVEN_METADATA_LOCAL_XML + ".")
+        || name.equals(REMOTE_REPOSITORIES) || name.startsWith(REMOTE_REPOSITORIES + ".");
+  }
+
+  private static String fileName(final Path path) {
+    Path name = path.getFileName();
+    return name == null ? "" : name.toString();
+  }
+
+  private void deleteDirectory(final Path dir) throws IOException {
+    Files.walkFileTree(dir, new SimpleFileVisitor<Path>()
+    {
+      @Override
+      public FileVisitResult visitFile(final Path file, final BasicFileAttributes attrs) throws IOException {
+        Files.delete(file);
+        return FileVisitResult.CONTINUE;
+      }
+
+      @Override
+      public FileVisitResult postVisitDirectory(final Path visited, final IOException e) throws IOException {
+        if (e != null) {
+          throw e;
+        }
+        Files.delete(visited);
+        return FileVisitResult.CONTINUE;
+      }
+    });
+    getLogger().info(String.format("Pre Bundling - deleted %s", dir));
   }
 
   @Override

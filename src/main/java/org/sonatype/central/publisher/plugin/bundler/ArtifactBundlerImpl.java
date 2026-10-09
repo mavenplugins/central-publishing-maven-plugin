@@ -48,6 +48,7 @@ public class ArtifactBundlerImpl
   @Override
   public void preBundle(final MavenProject project, final Path sourceDir, final ChecksumRequest checksumRequest) {
     projectUtils.deleteGroupArtifactMavenMetadataCentralStagingXml(project, sourceDir);
+    projectUtils.deleteLocalRepositoryFiles(sourceDir);
     projectUtils.createChecksumFiles(project, sourceDir, checksumRequest);
   }
 }
